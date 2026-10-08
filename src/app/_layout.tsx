@@ -1,3 +1,4 @@
+import { HouseholdProvider, useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { Stack } from 'expo-router';
@@ -8,13 +9,11 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Beim Start: gibt es schon eine gespeicherte Session?
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
     });
 
-    // Bei Login/Logout automatisch aktualisieren
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
@@ -23,12 +22,31 @@ export default function RootLayout() {
 
   if (loading) return null;
 
+  const userId = session?.user.id ?? null;
+
+  return (
+    <HouseholdProvider key={userId ?? 'logged-out'} userId={userId}>
+      <RootNavigator isLoggedIn={!!session} />
+    </HouseholdProvider>
+  );
+}
+
+function RootNavigator({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const { household, loading } = useHousehold();
+
+  if (isLoggedIn && loading) return null;
+
+  const hasHousehold = !!household;
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={isLoggedIn && hasHousehold}>
         <Stack.Screen name="index" />
       </Stack.Protected>
-      <Stack.Protected guard={!session}>
+      <Stack.Protected guard={isLoggedIn && !hasHousehold}>
+        <Stack.Screen name="onboarding" />
+      </Stack.Protected>
+      <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="login" />
       </Stack.Protected>
     </Stack>
