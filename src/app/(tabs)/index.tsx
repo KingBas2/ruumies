@@ -100,10 +100,6 @@ export default function Home() {
           <Text style={styles.shareButtonText}>Code teilen</Text>
         </Pressable>
       </View>
-
-      <Pressable style={styles.logout} onPress={() => supabase.auth.signOut()}>
-        <Text style={styles.logoutText}>Abmelden</Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -130,6 +126,4 @@ const styles = StyleSheet.create({
   code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: '#5C4033', textAlign: 'center', marginBottom: 12 },
   shareButton: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 12, alignItems: 'center' },
   shareButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  logout: { padding: 16, alignItems: 'center' },
-  logoutText: { color: '#8B6F5E', fontSize: 15 },
 });

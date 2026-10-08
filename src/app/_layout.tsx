@@ -41,7 +41,7 @@ function RootNavigator({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isLoggedIn && hasHousehold}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
       </Stack.Protected>
       <Stack.Protected guard={isLoggedIn && !hasHousehold}>
         <Stack.Screen name="onboarding" />
