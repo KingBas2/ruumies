@@ -1,7 +1,7 @@
+import { Inventory } from '@/components/inventory';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-
 type ShoppingItem = {
   id: string;
   name: string;
@@ -32,13 +32,7 @@ export default function Haushalt() {
         </View>
       </View>
 
-      {section === 'list' ? (
-        <ShoppingList />
-      ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Kommt bald 🧺</Text>
-        </View>
-      )}
+      {section === 'list' ? <ShoppingList /> : <Inventory />}
     </View>
   );
 }
@@ -247,6 +241,4 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 16, marginTop: 32 },
   allDone: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, paddingVertical: 14 },
   hint: { textAlign: 'center', color: '#B5A397', fontSize: 13, marginTop: 24 },
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  placeholderText: { fontSize: 18, color: '#8B6F5E' },
 });
