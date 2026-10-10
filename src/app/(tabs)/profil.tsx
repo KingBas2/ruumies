@@ -1,7 +1,7 @@
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Profil() {
   const { household } = useHousehold();
@@ -57,6 +57,13 @@ export default function Profil() {
     Alert.alert('Gespeichert', 'Dein Name wurde aktualisiert.');
   }
 
+    function shareCode() {
+    if (!household) return;
+    Share.share({
+      message: `Komm in unsere WG „${household.name}“ auf ruumies! Einladungscode: ${household.invite_code}`,
+    });
+  }
+
   const hasChanges = name.trim() !== savedName;
 
   return (
@@ -80,15 +87,21 @@ export default function Profil() {
         </Pressable>
       </View>
 
+      <Text style={styles.sectionTitle}>Deine WG</Text>
+      <View style={styles.card}>
+        <Text style={styles.wgName}>{household?.name}</Text>
+        <Text style={styles.codeLabel}>Einladungscode</Text>
+        <Text style={styles.code}>{household?.invite_code}</Text>
+        <Pressable style={styles.button} onPress={shareCode}>
+          <Text style={styles.buttonText}>Mitbewohner einladen</Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.sectionTitle}>Account</Text>
       <View style={styles.card}>
         <View style={styles.row}>
           <Text style={styles.label}>E-Mail</Text>
           <Text style={styles.value}>{email}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>WG</Text>
-          <Text style={styles.value}>{household?.name}</Text>
         </View>
       </View>
 
@@ -114,4 +127,7 @@ const styles = StyleSheet.create({
   value: { fontSize: 15, color: '#5C4033', fontWeight: '500', flexShrink: 1, textAlign: 'right' },
   logout: { padding: 16, alignItems: 'center' },
   logoutText: { color: '#E07A5F', fontSize: 16, fontWeight: '600' },
+  wgName: { fontSize: 20, fontWeight: '700', color: '#5C4033', textAlign: 'center' },
+  codeLabel: { fontSize: 14, color: '#8B6F5E', textAlign: 'center', marginTop: 16 },
+  code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: '#5C4033', textAlign: 'center', marginVertical: 8 },
 });

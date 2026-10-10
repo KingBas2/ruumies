@@ -1,7 +1,7 @@
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Member = {
   id: string;
@@ -75,13 +75,6 @@ export default function Home() {
     if (next !== me.guest_count) updateMe({ guest_count: next });
   }
 
-  function shareCode() {
-    if (!household) return;
-    Share.share({
-      message: `Komm in unsere WG „${household.name}“ auf ruumies! Einladungscode: ${household.invite_code}`,
-    });
-  }
-
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.wgName}>{household?.name}</Text>
@@ -129,14 +122,6 @@ export default function Home() {
           </View>
         ))}
       </View>
-
-      <Text style={styles.sectionTitle}>Mitbewohner einladen</Text>
-      <View style={styles.card}>
-        <Text style={styles.code}>{household?.invite_code}</Text>
-        <Pressable style={styles.shareButton} onPress={shareCode}>
-          <Text style={styles.shareButtonText}>Code teilen</Text>
-        </Pressable>
-      </View>
     </ScrollView>
   );
 }
@@ -174,7 +159,4 @@ const styles = StyleSheet.create({
   memberName: { fontSize: 16, color: '#5C4033' },
   memberGuests: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
   memberStatus: { fontSize: 14, color: '#8B6F5E' },
-  code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: '#5C4033', textAlign: 'center', marginBottom: 12 },
-  shareButton: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 12, alignItems: 'center' },
-  shareButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
 });
