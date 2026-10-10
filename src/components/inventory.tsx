@@ -1,3 +1,4 @@
+import { ActionSheet } from '@/components/action-sheet';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -30,6 +31,7 @@ export function Inventory() {
   const [members, setMembers] = useState<Member[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Location | 'all'>('all');
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Formular zum Hinzufügen
   const [showForm, setShowForm] = useState(false);
@@ -129,17 +131,9 @@ export function Inventory() {
     }
   }
 
-  function showActions(item: InventoryItem) {
-    Alert.alert(item.name, 'Was möchtest du tun?', [
-      { text: 'Verbraucht', onPress: () => removeItem(item, false) },
-      { text: 'Verbraucht + auf Einkaufsliste', onPress: () => removeItem(item, true) },
-      { text: 'Abbrechen', style: 'cancel' },
-    ]);
-  }
-
   function renderItem(item: InventoryItem) {
     return (
-      <Pressable key={item.id} style={styles.itemRow} onPress={() => showActions(item)}>
+            <Pressable key={item.id} style={styles.itemRow} onPress={() => setSelectedItem(item)}>
         <View style={styles.itemInfo}>
           <Text style={styles.itemName}>{item.name}</Text>
           {item.quantity && <Text style={styles.itemQuantity}>{item.quantity}</Text>}
@@ -256,6 +250,27 @@ export function Inventory() {
       )}
 
       {visibleCount > 0 && <Text style={styles.hint}>Tippen, wenn etwas verbraucht ist</Text>}
+
+     <ActionSheet
+        visible={selectedItem !== null}
+        title={selectedItem?.name}
+        subtitle={
+          selectedItem
+            ? [selectedItem.quantity, `gehört ${ownerLabel(selectedItem.owner_id) === 'du' ? 'dir' : ownerLabel(selectedItem.owner_id)}`]
+                .filter(Boolean)
+                .join(' · ')
+            : undefined
+        }
+        actions={
+          selectedItem
+            ? [
+                { label: 'Verbraucht', emoji: '✅', onPress: () => removeItem(selectedItem, false) },
+                { label: 'Verbraucht + auf Einkaufsliste', emoji: '🛒', onPress: () => removeItem(selectedItem, true) },
+              ]
+            : []
+        }
+        onClose={() => setSelectedItem(null)}
+      />
     </ScrollView>
   );
 }
