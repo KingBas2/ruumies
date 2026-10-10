@@ -8,6 +8,7 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
 export default function TabsLayout() {
   return (
     <Tabs
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#E07A5F',
@@ -15,6 +16,13 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: '#FFF8F0', borderTopColor: '#F2E6DA' },
       }}
     >
+      <Tabs.Screen
+        name="haushalt"
+        options={{
+          title: 'Haushalt',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🧺" focused={focused} />,
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{
