@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
+function TabIcon({ emoji, focused, size = 22 }: { emoji: string; focused: boolean; size?: number }) {
+  return <Text style={{ fontSize: size, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
 }
 
 export default function TabsLayout() {
@@ -34,7 +34,14 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} size={26} />,
+        }}
+      />
+      <Tabs.Screen
+        name="finanzen"
+        options={{
+          title: 'Finanzen',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💸" focused={focused} />,
         }}
       />
       <Tabs.Screen
