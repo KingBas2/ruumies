@@ -17,6 +17,13 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
+        name="kalender"
+        options={{
+          title: 'Kalender',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="📅" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="haushalt"
         options={{
           title: 'Haushalt',
