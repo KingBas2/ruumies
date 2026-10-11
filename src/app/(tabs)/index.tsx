@@ -1,3 +1,4 @@
+import { NewsBoard } from '@/components/news-board';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
@@ -104,6 +105,7 @@ export default function Home() {
         </View>
       )}
 
+      <NewsBoard />
       <Text style={styles.sectionTitle}>Mitbewohner</Text>
       <View style={styles.card}>
         {members.map((m) => (
