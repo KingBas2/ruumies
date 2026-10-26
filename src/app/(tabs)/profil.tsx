@@ -1,7 +1,8 @@
+import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Profil() {
   const { household } = useHousehold();
@@ -10,6 +11,7 @@ export default function Profil() {
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState('');
   const [saving, setSaving] = useState(false);
+  const dialog = useDialog();
 
   useEffect(() => {
     async function load() {
@@ -39,7 +41,7 @@ export default function Profil() {
   async function saveName() {
     const trimmed = name.trim();
     if (!trimmed) {
-      Alert.alert('Hoppla', 'Dein Name darf nicht leer sein.');
+      dialog.alert('Hoppla', 'Dein Name darf nicht leer sein.');
       return;
     }
     if (!userId) return;
@@ -49,18 +51,27 @@ export default function Profil() {
     setSaving(false);
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
     setName(trimmed);
     setSavedName(trimmed);
-    Alert.alert('Gespeichert', 'Dein Name wurde aktualisiert.');
+    dialog.alert('Gespeichert', 'Dein Name wurde aktualisiert.');
   }
 
     function shareCode() {
     if (!household) return;
     Share.share({
       message: `Komm in unsere WG „${household.name}“ auf ruumies! Einladungscode: ${household.invite_code}`,
+    });
+  }
+
+  function confirmLogout() {
+    dialog.confirm({
+      title: 'Abmelden?',
+      message: 'Du kannst dich jederzeit wieder anmelden.',
+      confirmLabel: 'Abmelden',
+      onConfirm: () => supabase.auth.signOut(),
     });
   }
 
@@ -105,7 +116,7 @@ export default function Profil() {
         </View>
       </View>
 
-      <Pressable style={styles.logout} onPress={() => supabase.auth.signOut()}>
+      <Pressable style={styles.logout} onPress={confirmLogout}>
         <Text style={styles.logoutText}>Abmelden</Text>
       </Pressable>
     </ScrollView>

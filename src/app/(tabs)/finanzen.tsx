@@ -1,9 +1,10 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { ExpenseForm, Member } from '@/components/expense-form';
+import { useDialog } from '@/lib/dialog';
 import { formatEuro } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Balance = { user_id: string; balance_cents: number };
 
@@ -70,6 +71,7 @@ export default function Finanzen() {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
+  const dialog = useDialog();
 
   const loadAll = useCallback(async () => {
     const [balanceRes, expenseRes, settlementRes] = await Promise.all([
@@ -125,33 +127,41 @@ export default function Finanzen() {
     return members.find((m) => m.id === id)?.display_name ?? 'Ehemalig';
   }
 
+    // Löschen darf nur, wer bezahlt bzw. überwiesen hat
+  function canDelete(entry: HistoryEntry) {
+    return entry.kind === 'expense' ? entry.data.paid_by === userId : entry.data.from_user === userId;
+  }
+
   // ---------- Aktionen ----------
 
   function confirmSettle(t: Transfer) {
-    Alert.alert(
-      'Als bezahlt markieren?',
-      `${name(t.from)} ${t.from === userId ? 'hast' : 'hat'} ${name(t.to, 'dativ')} ${formatEuro(t.amount)} überwiesen.`,
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Ja, erledigt',
-          onPress: async () => {
-            const { error } = await supabase
-              .from('settlements')
-              .insert({ from_user: t.from, to_user: t.to, amount_cents: t.amount });
-            if (error) Alert.alert('Das hat nicht geklappt', error.message);
-            else loadAll();
-          },
-        },
-      ]
-    );
+    dialog.confirm({
+      title: 'Als bezahlt markieren?',
+      message: `${name(t.from)} ${t.from === userId ? 'hast' : 'hat'} ${name(t.to, 'dativ')} ${formatEuro(t.amount)} überwiesen.`,
+      confirmLabel: 'Ja, erledigt',
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('settlements')
+          .insert({ from_user: t.from, to_user: t.to, amount_cents: t.amount });
+        if (error) dialog.alert('Das hat nicht geklappt', error.message);
+        else loadAll();
+      },
+    });
   }
 
-  async function deleteEntry(entry: HistoryEntry) {
-    const table = entry.kind === 'expense' ? 'expenses' : 'settlements';
-    const { error } = await supabase.from(table).delete().eq('id', entry.data.id);
-    if (error) Alert.alert('Das hat nicht geklappt', error.message);
-    else loadAll();
+  function deleteEntry(entry: HistoryEntry) {
+    dialog.confirm({
+      title: entry.kind === 'expense' ? `„${entry.data.title}“ löschen?` : 'Rückzahlung löschen?',
+      message: 'Die Salden werden danach neu berechnet.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+      onConfirm: async () => {
+        const table = entry.kind === 'expense' ? 'expenses' : 'settlements';
+        const { error } = await supabase.from(table).delete().eq('id', entry.data.id);
+        if (error) dialog.alert('Das hat nicht geklappt', error.message);
+        else loadAll();
+      },
+    });
   }
 
   // ---------- Berechnungen ----------
@@ -227,7 +237,7 @@ export default function Finanzen() {
               <Pressable
                 key={`${entry.kind}-${entry.data.id}`}
                 style={[styles.historyRow, i > 0 && styles.rowBorder]}
-                onPress={() => entry.data.created_by === userId && setSelectedEntry(entry)}
+                onPress={() => canDelete(entry) && setSelectedEntry(entry)}
               >
                 <Text style={styles.historyEmoji}>{entry.kind === 'expense' ? '🧾' : '💸'}</Text>
                 <View style={styles.historyInfo}>

@@ -2,7 +2,7 @@ import { DateTimeField } from '@/components/date-time-field';
 import { formatEuro, parseAmount } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export type Member = {
   id: string;
@@ -32,6 +32,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
   const [participants, setParticipants] = useState<string[]>([]);
   const [date, setDate] = useState(new Date());
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Beim Öffnen: ich habe bezahlt, alle teilen, heute
   useEffect(() => {
@@ -41,6 +42,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
     setPaidBy(userId);
     setParticipants(members.map((m) => m.id));
     setDate(new Date());
+    setError(null);
   }, [visible, userId, members]);
 
   function nameOf(m: Member) {
@@ -56,19 +58,19 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
 
   async function save() {
     if (!title.trim()) {
-      Alert.alert('Hoppla', 'Wofür war die Ausgabe?');
+      setError('Wofür war die Ausgabe?');
       return;
     }
     if (!amountCents) {
-      Alert.alert('Hoppla', 'Bitte gib einen gültigen Betrag ein, z. B. 12,50.');
+      setError('Bitte gib einen gültigen Betrag ein, z. B. 12,50.');
       return;
     }
     if (!paidBy) {
-      Alert.alert('Hoppla', 'Wer hat bezahlt?');
+      setError('Wer hat bezahlt?');
       return;
     }
     if (participants.length === 0) {
-      Alert.alert('Hoppla', 'Bitte wähle mindestens eine Person, auf die aufgeteilt wird.');
+      setError('Bitte wähle mindestens eine Person, auf die aufgeteilt wird.');
       return;
     }
 
@@ -83,7 +85,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
     setSaving(false);
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      setError(`Das hat nicht geklappt: ${error.message}`);
       return;
     }
     onSaved();
@@ -105,6 +107,11 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
           {/* Betrag */}
           <View style={styles.amountBox}>
             <TextInput
@@ -216,4 +223,6 @@ const styles = StyleSheet.create({
   chipTextActive: { color: 'white' },
 
   preview: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, marginTop: 16 },
+  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 8 },
+  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
 });

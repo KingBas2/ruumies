@@ -1,8 +1,9 @@
 import { NewsBoard } from '@/components/news-board';
+import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Member = {
   id: string;
@@ -19,6 +20,7 @@ export default function Home() {
   const { household } = useHousehold();
   const [userId, setUserId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const dialog = useDialog();
 
   const loadMembers = useCallback(async () => {
     const { data, error } = await supabase
@@ -60,7 +62,7 @@ export default function Home() {
 
     if (error) {
       setMembers((prev) => prev.map((m) => (m.id === me.id ? { ...m, ...previous } : m)));
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
   }
 

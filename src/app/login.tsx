@@ -1,24 +1,36 @@
+import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Login() {
+  const dialog = useDialog();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  function inputsValid() {
+    if (!email.trim() || !password) {
+      dialog.alert('Hoppla', 'Bitte gib deine E-Mail-Adresse und ein Passwort ein.');
+      return false;
+    }
+    return true;
+  }
+
   async function signIn() {
+    if (!inputsValid()) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-    if (error) Alert.alert('Anmeldung fehlgeschlagen', error.message);
+    if (error) dialog.alert('Anmeldung fehlgeschlagen', error.message);
   }
 
   async function signUp() {
+    if (!inputsValid()) return;
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
-    if (error) Alert.alert('Registrierung fehlgeschlagen', error.message);
+    if (error) dialog.alert('Registrierung fehlgeschlagen', error.message);
   }
 
   return (
@@ -39,8 +51,8 @@ export default function Login() {
         value={password}
         onChangeText={setPassword}
       />
-      <Pressable style={styles.button} onPress={signIn} disabled={loading}>
-        <Text style={styles.buttonText}>Anmelden</Text>
+      <Pressable style={[styles.button, loading && styles.disabled]} onPress={signIn} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Einen Moment…' : 'Anmelden'}</Text>
       </Pressable>
       <Pressable style={styles.secondary} onPress={signUp} disabled={loading}>
         <Text style={styles.secondaryText}>Neu hier? Registrieren</Text>
@@ -54,6 +66,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 32, color: '#5C4033' },
   input: { backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 12, fontSize: 16 },
   button: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  disabled: { opacity: 0.6 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   secondary: { padding: 16, alignItems: 'center' },
   secondaryText: { color: '#5C4033', fontSize: 15 },

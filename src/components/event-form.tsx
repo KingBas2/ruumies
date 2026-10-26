@@ -1,7 +1,7 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 type Props = {
   visible: boolean;
@@ -32,6 +32,7 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
   const [start, setStart] = useState(new Date());
   const [end, setEnd] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Beim Öffnen: alles zurücksetzen, Start = ausgewählter Tag zur nächsten vollen Stunde
   useEffect(() => {
@@ -46,6 +47,7 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
     setIsPrivate(false);
     setStart(s);
     setEnd(null);
+    setError(null);
   }, [visible, initialDate]);
 
   function toggleEnd(on: boolean) {
@@ -61,7 +63,7 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
   async function save() {
     const trimmed = title.trim();
     if (!trimmed) {
-      Alert.alert('Hoppla', 'Bitte gib dem Termin einen Titel.');
+      setError('Bitte gib dem Termin einen Titel.');
       return;
     }
 
@@ -74,7 +76,7 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
     } else if (end) {
       endsAt = withTime(start, end);
       if (endsAt < startsAt) {
-        Alert.alert('Hoppla', 'Das Ende muss nach dem Beginn liegen.');
+        setError('Das Ende muss nach dem Beginn liegen.');
         return;
       }
     }
@@ -91,7 +93,7 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
     setSaving(false);
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      setError(`Das hat nicht geklappt: ${error.message}`);
       return;
     }
     onSaved();
@@ -113,6 +115,11 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
           <TextInput
             style={styles.titleInput}
             placeholder="Was steht an?"
@@ -231,4 +238,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16,
     minHeight: 100, textAlignVertical: 'top', color: '#5C4033',
   },
+  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 16 },
+  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
 });

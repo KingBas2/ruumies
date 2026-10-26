@@ -1,7 +1,8 @@
 import { ActionSheet } from '@/components/action-sheet';
+import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Post = {
   id: string;
@@ -39,6 +40,7 @@ export function NewsBoard() {
   const [sending, setSending] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const dialog = useDialog();
 
   const loadPosts = useCallback(async () => {
     const { data, error } = await supabase
@@ -85,7 +87,7 @@ export function NewsBoard() {
     setSending(false);
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
     setText('');
@@ -97,7 +99,7 @@ export function NewsBoard() {
     const { error } = await supabase.from('news_posts').delete().eq('id', post.id);
     if (error) {
       loadPosts();
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
   }
 

@@ -1,7 +1,8 @@
 import { ActionSheet } from '@/components/action-sheet';
+import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Location = {
   id: string;
@@ -30,6 +31,7 @@ export function Inventory() {
   const [filter, setFilter] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const dialog = useDialog();
 
   // Formular: neues Ding
   const [showForm, setShowForm] = useState(false);
@@ -109,11 +111,11 @@ export function Inventory() {
   async function addItem() {
     const trimmed = name.trim();
     if (!trimmed) {
-      Alert.alert('Hoppla', 'Bitte gib einen Namen ein.');
+      dialog.alert('Hoppla', 'Bitte gib einen Namen ein.');
       return;
     }
     if (!locationId) {
-      Alert.alert('Hoppla', 'Bitte wähle einen Ort.');
+      dialog.alert('Hoppla', 'Bitte wähle einen Ort.');
       return;
     }
 
@@ -125,7 +127,7 @@ export function Inventory() {
     });
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
     closeForm();
@@ -139,7 +141,7 @@ export function Inventory() {
       const { error } = await supabase.from('shopping_items').insert({ name: item.name });
       if (error) {
         loadItems();
-        Alert.alert('Das hat nicht geklappt', error.message);
+        dialog.alert('Das hat nicht geklappt', error.message);
         return;
       }
     }
@@ -147,7 +149,7 @@ export function Inventory() {
     const { error } = await supabase.from('inventory_items').delete().eq('id', item.id);
     if (error) {
       loadItems();
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
   }
 
@@ -156,7 +158,7 @@ export function Inventory() {
   async function addLocation() {
     const trimmed = newLocationName.trim();
     if (!trimmed) {
-      Alert.alert('Hoppla', 'Bitte gib dem Ort einen Namen.');
+      dialog.alert('Hoppla', 'Bitte gib dem Ort einen Namen.');
       return;
     }
 
@@ -167,7 +169,7 @@ export function Inventory() {
       .single();
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
 
@@ -181,13 +183,13 @@ export function Inventory() {
 
   async function deleteLocation(location: Location) {
     if (items.some((i) => i.location_id === location.id)) {
-      Alert.alert('Ort ist nicht leer', `In „${location.name}“ liegen noch Sachen. Entferne sie zuerst.`);
+      dialog.alert('Ort ist nicht leer', `In „${location.name}“ liegen noch Sachen. Entferne sie zuerst.`);
       return;
     }
 
     const { error } = await supabase.from('inventory_locations').delete().eq('id', location.id);
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
     if (filter === location.id) setFilter('all');

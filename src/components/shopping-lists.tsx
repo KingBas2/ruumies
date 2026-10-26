@@ -1,7 +1,8 @@
 import { ActionSheet } from '@/components/action-sheet';
+import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type List = {
   id: string;
@@ -24,6 +25,7 @@ export function ShoppingLists() {
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [selectedList, setSelectedList] = useState<List | null>(null);
   const [selectedItem, setSelectedItem] = useState<ShoppingItem | null>(null);
+  const dialog = useDialog();
 
   // Neuer Eintrag
   const [name, setName] = useState('');
@@ -96,7 +98,7 @@ export function ShoppingLists() {
       .from('shopping_items')
       .insert({ name: trimmed, quantity: quantity.trim() || null, list_id: activeListId });
 
-    if (error) Alert.alert('Das hat nicht geklappt', error.message);
+    if (error) dialog.alert('Das hat nicht geklappt', error.message);
     else loadItems();
   }
 
@@ -109,7 +111,7 @@ export function ShoppingLists() {
 
     if (error) {
       loadItems();
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
   }
 
@@ -118,27 +120,26 @@ export function ShoppingLists() {
     const { error } = await supabase.from('shopping_items').delete().eq('id', item.id);
     if (error) {
       loadItems();
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
   }
 
   function clearChecked() {
-    Alert.alert('Erledigte löschen?', 'Alle abgehakten Einträge dieser Liste werden entfernt.', [
-      { text: 'Abbrechen', style: 'cancel' },
-      {
-        text: 'Löschen',
-        style: 'destructive',
-        onPress: async () => {
-          const ids = checkedItems.map((i) => i.id);
-          setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
-          const { error } = await supabase.from('shopping_items').delete().in('id', ids);
-          if (error) {
-            loadItems();
-            Alert.alert('Das hat nicht geklappt', error.message);
-          }
-        },
+    dialog.confirm({
+      title: 'Erledigte löschen?',
+      message: 'Alle abgehakten Einträge dieser Liste werden entfernt.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+      onConfirm: async () => {
+        const ids = checkedItems.map((i) => i.id);
+        setItems((prev) => prev.filter((i) => !ids.includes(i.id)));
+        const { error } = await supabase.from('shopping_items').delete().in('id', ids);
+        if (error) {
+          loadItems();
+          dialog.alert('Das hat nicht geklappt', error.message);
+        }
       },
-    ]);
+    });
   }
 
   // ---------- Listen ----------
@@ -146,7 +147,7 @@ export function ShoppingLists() {
   async function addList() {
     const trimmed = newListName.trim();
     if (!trimmed) {
-      Alert.alert('Hoppla', 'Bitte gib der Liste einen Namen.');
+      dialog.alert('Hoppla', 'Bitte gib der Liste einen Namen.');
       return;
     }
 
@@ -157,7 +158,7 @@ export function ShoppingLists() {
       .single();
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
 
@@ -174,26 +175,21 @@ export function ShoppingLists() {
 
   function confirmDeleteList(list: List) {
     const count = items.filter((i) => i.list_id === list.id).length;
-    Alert.alert(
-      `„${list.name}“ löschen?`,
-      count > 0 ? `Die ${count} Einträge auf dieser Liste werden ebenfalls gelöscht.` : undefined,
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: async () => {
-            const { error } = await supabase.from('shopping_lists').delete().eq('id', list.id);
-            if (error) {
-              Alert.alert('Das hat nicht geklappt', error.message);
-              return;
-            }
-            loadLists();
-            loadItems();
-          },
-        },
-      ]
-    );
+    dialog.confirm({
+      title: `„${list.name}“ löschen?`,
+      message: count > 0 ? `Die ${count} Einträge auf dieser Liste werden ebenfalls gelöscht.` : undefined,
+      confirmLabel: 'Löschen',
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.from('shopping_lists').delete().eq('id', list.id);
+        if (error) {
+          dialog.alert('Das hat nicht geklappt', error.message);
+          return;
+        }
+        loadLists();
+        loadItems();
+      },
+    });
   }
 
   // ---------- Anzeige ----------

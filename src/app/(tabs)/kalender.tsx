@@ -1,9 +1,10 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { formatDate, formatTime } from '@/components/date-time-field';
 import { EventForm } from '@/components/event-form';
+import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type CalendarEvent = {
   id: string;
@@ -69,6 +70,7 @@ export default function Kalender() {
   const [userId, setUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const dialog = useDialog();
 
   const today = new Date();
 
@@ -198,8 +200,18 @@ export default function Kalender() {
     if (error) {
       loadEvents();
       loadUpcoming();
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
     }
+  }
+
+  function confirmDeleteEvent(e: CalendarEvent) {
+    dialog.confirm({
+      title: `„${e.title}“ löschen?`,
+      message: e.is_private ? undefined : 'Der Termin verschwindet für die ganze WG.',
+      confirmLabel: 'Löschen',
+      destructive: true,
+      onConfirm: () => deleteEvent(e),
+    });
   }
 
   const dayEvents = eventsOn(selectedDate);
@@ -361,7 +373,7 @@ export default function Kalender() {
         }
         actions={
           selectedEvent
-            ? [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => deleteEvent(selectedEvent) }]
+            ? [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteEvent(selectedEvent) }]
             : []
         }
         onClose={() => setSelectedEvent(null)}

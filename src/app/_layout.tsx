@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { DialogProvider } from '@/lib/dialog';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,10 +25,12 @@ export default function RootLayout() {
 
   const userId = session?.user.id ?? null;
 
-  return (
-    <HouseholdProvider key={userId ?? 'logged-out'} userId={userId}>
-      <RootNavigator isLoggedIn={!!session} />
-    </HouseholdProvider>
+    return (
+    <DialogProvider>
+      <HouseholdProvider key={userId ?? 'logged-out'} userId={userId}>
+        <RootNavigator isLoggedIn={!!session} />
+      </HouseholdProvider>
+    </DialogProvider>
   );
 }
 

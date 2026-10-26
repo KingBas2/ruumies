@@ -35,6 +35,7 @@ export function ActionSheet({ visible, title, subtitle, actions, onClose }: Prop
                 onPress={() => {
                   onClose();
                   action.onPress();
+                  setTimeout(action.onPress, 300);
                 }}
               >
                 {action.emoji && <Text style={styles.actionEmoji}>{action.emoji}</Text>}

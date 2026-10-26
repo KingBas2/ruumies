@@ -1,9 +1,11 @@
+import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Onboarding() {
+  const dialog = useDialog();
   const { refresh } = useHousehold();
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [input, setInput] = useState('');
@@ -11,7 +13,7 @@ export default function Onboarding() {
 
   async function submit() {
     if (!input.trim()) {
-      Alert.alert('Hoppla', mode === 'create' ? 'Bitte gib einen WG-Namen ein.' : 'Bitte gib einen Code ein.');
+      dialog.alert('Hoppla', mode === 'create' ? 'Bitte gib einen WG-Namen ein.' : 'Bitte gib einen Code ein.');
       return;
     }
 
@@ -23,7 +25,7 @@ export default function Onboarding() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Das hat nicht geklappt', error.message);
+      dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
 
