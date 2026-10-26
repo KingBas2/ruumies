@@ -9,6 +9,7 @@ type List = {
   name: string;
   emoji: string;
   is_default: boolean;
+  created_by: string | null;
 };
 
 type ShoppingItem = {
@@ -17,6 +18,7 @@ type ShoppingItem = {
   quantity: string | null;
   is_checked: boolean;
   list_id: string;
+  added_by: string | null;
 };
 
 export function ShoppingLists() {
@@ -35,11 +37,12 @@ export function ShoppingLists() {
   const [showNewList, setShowNewList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListEmoji, setNewListEmoji] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
   const loadLists = useCallback(async () => {
     const { data, error } = await supabase
       .from('shopping_lists')
-      .select('id, name, emoji, is_default')
+      .select('id, name, emoji, is_default, created_by')
       .order('is_default', { ascending: false })
       .order('created_at');
     if (error) console.error(error);
@@ -49,7 +52,7 @@ export function ShoppingLists() {
   const loadItems = useCallback(async () => {
     const { data, error } = await supabase
       .from('shopping_items')
-      .select('id, name, quantity, is_checked, list_id')
+      .select('id, name, quantity, is_checked, list_id, added_by')
       .order('created_at');
     if (error) console.error(error);
     else setItems(data ?? []);
@@ -58,6 +61,8 @@ export function ShoppingLists() {
   useEffect(() => {
     loadLists();
     loadItems();
+
+    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
 
     const channel = supabase
       .channel('shopping-changes')
@@ -84,6 +89,11 @@ export function ShoppingLists() {
 
   function openCount(listId: string) {
     return items.filter((i) => i.list_id === listId && !i.is_checked).length;
+  }
+
+  // Löschen: eigene Einträge oder abgehakte
+  function canDeleteItem(item: ShoppingItem) {
+    return item.added_by === userId || item.is_checked;
   }
 
   // ---------- Einträge ----------
@@ -200,7 +210,7 @@ export function ShoppingLists() {
         key={item.id}
         style={styles.itemRow}
         onPress={() => toggleItem(item)}
-        onLongPress={() => setSelectedItem(item)}
+         onLongPress={() => canDeleteItem(item) && setSelectedItem(item)}
       >
         <View style={[styles.checkbox, item.is_checked && styles.checkboxChecked]}>
           {item.is_checked && <Text style={styles.checkmark}>✓</Text>}
@@ -328,10 +338,16 @@ export function ShoppingLists() {
       <ActionSheet
         visible={selectedItem !== null}
         title={selectedItem?.name}
-        subtitle={selectedItem?.quantity ?? undefined}
+        subtitle={
+          selectedList?.is_default
+            ? 'Standardliste: Hier landet alles, was im Bestand verbraucht wird. Sie kann nicht gelöscht werden.'
+            : selectedList && selectedList.created_by !== userId
+              ? 'Nur wer die Liste angelegt hat, kann sie löschen.'
+              : undefined
+        }
         actions={
-          selectedItem
-            ? [{ label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteItem(selectedItem) }]
+          selectedList && !selectedList.is_default && selectedList.created_by === userId
+            ? [{ label: 'Liste löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteList(selectedList) }]
             : []
         }
         onClose={() => setSelectedItem(null)}

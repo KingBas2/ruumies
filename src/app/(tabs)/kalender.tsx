@@ -372,7 +372,7 @@ export default function Kalender() {
             : undefined
         }
         actions={
-          selectedEvent
+          selectedEvent && selectedEvent.created_by === userId
             ? [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteEvent(selectedEvent) }]
             : []
         }

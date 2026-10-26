@@ -8,6 +8,7 @@ type Location = {
   id: string;
   name: string;
   emoji: string;
+  created_by: string | null;
 };
 
 type InventoryItem = {
@@ -16,6 +17,7 @@ type InventoryItem = {
   quantity: string | null;
   location_id: string;
   owner_id: string | null;
+  added_by: string | null;
 };
 
 type Member = {
@@ -48,7 +50,7 @@ export function Inventory() {
   const loadItems = useCallback(async () => {
     const { data, error } = await supabase
       .from('inventory_items')
-      .select('id, name, quantity, location_id, owner_id')
+      .select('id, name, quantity, location_id, owner_id, added_by')
       .order('name');
     if (error) console.error(error);
     else setItems(data ?? []);
@@ -57,7 +59,7 @@ export function Inventory() {
   const loadLocations = useCallback(async () => {
     const { data, error } = await supabase
       .from('inventory_locations')
-      .select('id, name, emoji')
+      .select('id, name, emoji, created_by')
       .order('sort_order')
       .order('created_at');
     if (error) console.error(error);
@@ -92,6 +94,11 @@ export function Inventory() {
     if (!id) return 'gemeinsam';
     if (id === userId) return 'du';
     return members.find((m) => m.id === id)?.display_name ?? 'ehemalig';
+  }
+
+   // Entfernen: gemeinsame Dinge alle, persönliche nur Besitzer oder wer es eingetragen hat
+  function canRemove(item: InventoryItem) {
+    return !item.owner_id || item.owner_id === userId || item.added_by === userId;
   }
 
   // ---------- Dinge ----------
@@ -374,13 +381,14 @@ export function Inventory() {
             ? [
                 selectedItem.quantity,
                 `gehört ${ownerLabel(selectedItem.owner_id) === 'du' ? 'dir' : ownerLabel(selectedItem.owner_id)}`,
+                !canRemove(selectedItem) && 'Nur der Besitzer kann es austragen.',
               ]
                 .filter(Boolean)
                 .join(' · ')
             : undefined
         }
         actions={
-          selectedItem
+          selectedItem && canRemove(selectedItem)
             ? [
                 { label: 'Verbraucht', emoji: '✅', onPress: () => removeItem(selectedItem, false) },
                 { label: 'Verbraucht + auf Einkaufsliste', emoji: '🛒', onPress: () => removeItem(selectedItem, true) },
@@ -394,8 +402,13 @@ export function Inventory() {
       <ActionSheet
         visible={selectedLocation !== null}
         title={selectedLocation ? `${selectedLocation.emoji} ${selectedLocation.name}` : undefined}
+        subtitle={
+          selectedLocation && selectedLocation.created_by !== userId
+            ? 'Nur wer den Ort angelegt hat, kann ihn löschen.'
+            : undefined
+        }
         actions={
-          selectedLocation
+          selectedLocation && selectedLocation.created_by === userId
             ? [{ label: 'Ort löschen', emoji: '🗑️', destructive: true, onPress: () => deleteLocation(selectedLocation) }]
             : []
         }
