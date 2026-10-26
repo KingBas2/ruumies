@@ -1,7 +1,7 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
-import { useCallback, useEffect, useState } from 'react';
+import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Location = {
@@ -33,6 +33,8 @@ export function Inventory() {
   const [filter, setFilter] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const dialog = useDialog();
 
   // Formular: neues Ding
@@ -104,12 +106,26 @@ export function Inventory() {
   // ---------- Dinge ----------
 
   function openForm() {
+    setEditingItem(null);
+    setName('');
+    setQuantity('');
     setLocationId(filter === 'all' ? locations[0]?.id ?? null : filter);
     setOwnerId(null);
     setShowForm(true);
   }
 
+  function startEdit(item: InventoryItem) {
+    setEditingItem(item);
+    setName(item.name);
+    setQuantity(item.quantity ?? '');
+    setLocationId(item.location_id);
+    setOwnerId(item.owner_id);
+    setShowForm(true);
+    scrollRef.current?.scrollTo({ y: 0, animated: true }); // Formular ist ganz oben
+  }
+
   function closeForm() {
+    setEditingItem(null);
     setName('');
     setQuantity('');
     setShowForm(false);
@@ -126,12 +142,16 @@ export function Inventory() {
       return;
     }
 
-    const { error } = await supabase.from('inventory_items').insert({
+    const payload = {
       name: trimmed,
       quantity: quantity.trim() || null,
       location_id: locationId,
       owner_id: ownerId,
-    });
+    };
+
+    const { error } = editingItem
+      ? await supabase.from('inventory_items').update(payload).eq('id', editingItem.id)
+      : await supabase.from('inventory_items').insert(payload);
 
     if (error) {
       dialog.alert('Das hat nicht geklappt', error.message);
@@ -223,7 +243,7 @@ export function Inventory() {
   const visibleCount = items.filter((i) => filter === 'all' || i.location_id === filter).length;
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       {/* Filter-Chips (gedrückt halten = Ort verwalten) */}
       <ScrollView
         horizontal
@@ -291,6 +311,7 @@ export function Inventory() {
       {/* Hinzufügen */}
       {showForm ? (
         <View style={styles.formCard}>
+          {editingItem && <Text style={styles.formTitle}>✏️ „{editingItem.name}“ bearbeiten</Text>}
           <TextInput style={styles.input} placeholder="Was ist neu da?" value={name} onChangeText={setName} />
           <TextInput
             style={styles.input}
@@ -340,7 +361,7 @@ export function Inventory() {
               <Text style={styles.cancelText}>Abbrechen</Text>
             </Pressable>
             <Pressable style={styles.addButton} onPress={addItem}>
-              <Text style={styles.addButtonText}>Hinzufügen</Text>
+              <Text style={styles.addButtonText}>{editingItem ? 'Speichern' : 'Hinzufügen'}</Text>
             </Pressable>
           </View>
         </View>
@@ -392,6 +413,7 @@ export function Inventory() {
             ? [
                 { label: 'Verbraucht', emoji: '✅', onPress: () => removeItem(selectedItem, false) },
                 { label: 'Verbraucht + auf Einkaufsliste', emoji: '🛒', onPress: () => removeItem(selectedItem, true) },
+                { label: 'Bearbeiten', emoji: '✏️', onPress: () => startEdit(selectedItem) },
               ]
             : []
         }
@@ -463,4 +485,5 @@ const styles = StyleSheet.create({
   chipPlus: { marginRight: 0, paddingHorizontal: 16 },
   chipPlusText: { color: '#8B6F5E', fontSize: 16, fontWeight: '700' },
   newLocationCard: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 },
+  formTitle: { fontSize: 15, fontWeight: '700', color: '#5C4033', marginBottom: 10 },
 });
