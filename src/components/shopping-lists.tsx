@@ -27,6 +27,7 @@ export function ShoppingLists() {
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [selectedList, setSelectedList] = useState<List | null>(null);
   const [selectedItem, setSelectedItem] = useState<ShoppingItem | null>(null);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const dialog = useDialog();
 
   // Neuer Eintrag
@@ -98,9 +99,36 @@ export function ShoppingLists() {
 
   // ---------- Einträge ----------
 
+  function startEdit(item: ShoppingItem) {
+    setEditingItem(item);
+    setName(item.name);
+    setQuantity(item.quantity ?? '');
+  }
+
+  function cancelEdit() {
+    setEditingItem(null);
+    setName('');
+    setQuantity('');
+  }
+
   async function addItem() {
     const trimmed = name.trim();
     if (!trimmed || !activeListId) return;
+
+        // Bearbeiten statt neu anlegen
+    if (editingItem) {
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({ name: trimmed, quantity: quantity.trim() || null })
+        .eq('id', editingItem.id);
+      if (error) {
+        dialog.alert('Das hat nicht geklappt', error.message);
+        return;
+      }
+      cancelEdit();
+      loadItems();
+      return;
+    }
 
     setName('');
     setQuantity('');
@@ -282,6 +310,15 @@ export function ShoppingLists() {
         </View>
       )}
 
+      {editingItem && (
+        <View style={styles.editBanner}>
+          <Text style={styles.editBannerText}>✏️ „{editingItem.name}“ bearbeiten</Text>
+          <Pressable onPress={cancelEdit} hitSlop={8}>
+            <Text style={styles.editCancel}>Abbrechen</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Neuer Eintrag */}
       <View style={styles.addRow}>
         <TextInput
@@ -301,7 +338,7 @@ export function ShoppingLists() {
           returnKeyType="done"
         />
         <Pressable style={styles.addButton} onPress={addItem}>
-          <Text style={styles.addButtonText}>+</Text>
+          <Text style={styles.addButtonText}>{editingItem ? '✓' : '+'}</Text>
         </Pressable>
       </View>
 
@@ -338,16 +375,15 @@ export function ShoppingLists() {
       <ActionSheet
         visible={selectedItem !== null}
         title={selectedItem?.name}
-        subtitle={
-          selectedList?.is_default
-            ? 'Standardliste: Hier landet alles, was im Bestand verbraucht wird. Sie kann nicht gelöscht werden.'
-            : selectedList && selectedList.created_by !== userId
-              ? 'Nur wer die Liste angelegt hat, kann sie löschen.'
-              : undefined
-        }
+        subtitle={selectedItem?.quantity ?? undefined}
         actions={
-          selectedList && !selectedList.is_default && selectedList.created_by === userId
-            ? [{ label: 'Liste löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteList(selectedList) }]
+          selectedItem
+            ? [
+                ...(selectedItem.added_by === userId
+                  ? [{ label: 'Bearbeiten', emoji: '✏️', onPress: () => startEdit(selectedItem) }]
+                  : []),
+                { label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteItem(selectedItem) },
+              ]
             : []
         }
         onClose={() => setSelectedItem(null)}
@@ -360,10 +396,12 @@ export function ShoppingLists() {
         subtitle={
           selectedList?.is_default
             ? 'Standardliste: Hier landet alles, was im Bestand verbraucht wird. Sie kann nicht gelöscht werden.'
-            : undefined
+            : selectedList && selectedList.created_by !== userId
+              ? 'Nur wer die Liste angelegt hat, kann sie löschen.'
+              : undefined
         }
         actions={
-          selectedList && !selectedList.is_default
+          selectedList && !selectedList.is_default && selectedList.created_by === userId
             ? [{ label: 'Liste löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteList(selectedList) }]
             : []
         }
@@ -431,4 +469,10 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 16, marginTop: 32 },
   allDone: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, paddingVertical: 14 },
   hint: { textAlign: 'center', color: '#B5A397', fontSize: 13, marginTop: 24 },
+  editBanner: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#F2E6DA', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
+  },
+  editBannerText: { fontSize: 14, color: '#5C4033', fontWeight: '600', flex: 1, marginRight: 8 },
+  editCancel: { fontSize: 14, color: '#E07A5F', fontWeight: '600' },
 });
