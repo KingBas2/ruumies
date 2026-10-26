@@ -1,11 +1,19 @@
 import { DateTimeField } from '@/components/date-time-field';
+import { Recurrence, RECURRENCE_LABELS, toDateKey } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
+type Member = {
+  id: string;
+  display_name: string | null;
+};
+
 type Props = {
   visible: boolean;
   initialDate: Date;
+  members: Member[];
+  userId: string | null;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -24,7 +32,7 @@ function withTime(base: Date, picked: Date) {
   return d;
 }
 
-export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
+export function EventForm({ visible, initialDate, members, userId, onClose, onSaved }: Props) {
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [allDay, setAllDay] = useState(false);
@@ -33,6 +41,9 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
   const [end, setEnd] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recurrence, setRecurrence] = useState<Recurrence>('none');
+  const [until, setUntil] = useState<Date | null>(null);
+  const [rotation, setRotation] = useState<string[]>([]);
 
   // Beim Öffnen: alles zurücksetzen, Start = ausgewählter Tag zur nächsten vollen Stunde
   useEffect(() => {
@@ -48,6 +59,9 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
     setStart(s);
     setEnd(null);
     setError(null);
+    setRecurrence('none');
+    setUntil(null);
+    setRotation([]);
   }, [visible, initialDate]);
 
   function toggleEnd(on: boolean) {
@@ -58,6 +72,24 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
     } else {
       setEnd(null);
     }
+  }
+
+    // Sobald jemand reihum dran ist, ist der Termin automatisch gemeinsam
+  const rotationActive = recurrence !== 'none' && rotation.length > 0;
+
+    function toggleUntil(on: boolean) {
+    if (on) {
+      const u = new Date(start);
+      u.setMonth(u.getMonth() + 3); // Vorschlag: in 3 Monaten
+      setUntil(u);
+    } else {
+      setUntil(null);
+    }
+  }
+
+  // Antippen fügt hinten an, nochmal antippen entfernt
+  function toggleRotation(id: string) {
+    setRotation((prev) => (prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]));
   }
 
   async function save() {
@@ -81,6 +113,11 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
       }
     }
 
+      if (recurrence !== 'none' && until && toDateKey(until) < toDateKey(startsAt)) {
+      setError('Das Enddatum der Wiederholung muss nach dem ersten Termin liegen.');
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase.from('calendar_events').insert({
       title: trimmed,
@@ -88,7 +125,10 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
       starts_at: startsAt.toISOString(),
       ends_at: endsAt?.toISOString() ?? null,
       all_day: allDay,
-      is_private: isPrivate,
+      is_private: isPrivate && !rotationActive,
+      recurrence,
+      recurrence_until: recurrence !== 'none' && until ? toDateKey(until) : null,
+      rotation: recurrence !== 'none' && rotation.length > 0 ? rotation : null,
     });
     setSaving(false);
 
@@ -178,18 +218,86 @@ export function EventForm({ visible, initialDate, onClose, onSaved }: Props) {
             )}
           </View>
 
+                    {/* Wiederholen */}
+          <Text style={styles.sectionLabel}>Wiederholen</Text>
+          <View style={styles.chipWrap}>
+            {(Object.keys(RECURRENCE_LABELS) as Recurrence[]).map((r) => (
+              <Pressable
+                key={r}
+                style={[styles.chip, recurrence === r && styles.chipActive]}
+                onPress={() => setRecurrence(r)}
+              >
+                <Text style={[styles.chipText, recurrence === r && styles.chipTextActive]}>
+                  {RECURRENCE_LABELS[r]}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {recurrence !== 'none' && (
+            <>
+              <View style={styles.card}>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Enddatum</Text>
+                  <Switch
+                    value={until !== null}
+                    onValueChange={toggleUntil}
+                    trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+                  />
+                </View>
+                {until && (
+                  <>
+                    <View style={styles.divider} />
+                    <View style={styles.row}>
+                      <Text style={styles.label}>Wiederholen bis</Text>
+                      <DateTimeField value={until} mode="date" onChange={setUntil} minimumDate={start} />
+                    </View>
+                  </>
+                )}
+              </View>
+
+              <Text style={styles.sectionLabel}>Reihum dran (optional)</Text>
+              <Text style={styles.sectionHint}>
+                Tippe die Personen in der Reihenfolge an, in der sie dran sein sollen.
+              </Text>
+              <View style={styles.chipWrap}>
+                {members.map((m) => {
+                  const position = rotation.indexOf(m.id);
+                  const active = position !== -1;
+                  return (
+                    <Pressable
+                      key={m.id}
+                      style={[styles.chip, active && styles.chipActiveGreen]}
+                      onPress={() => toggleRotation(m.id)}
+                    >
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                        {active ? `${position + 1}. ` : ''}
+                        {m.id === userId ? 'Ich' : m.display_name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
           {/* Privat */}
-          <View style={styles.card}>
+          <View style={[styles.card, rotationActive && styles.cardDisabled]}>
             <View style={styles.row}>
               <View style={styles.labelBlock}>
                 <Text style={styles.label}>🔒 Privat</Text>
                 <Text style={styles.sublabel}>
-                  {isPrivate ? 'Nur du siehst diesen Termin.' : 'Die ganze WG sieht diesen Termin.'}
+                  {rotationActive
+                    ? 'Termine mit Rotation sieht immer die ganze WG.'
+                    : isPrivate
+                      ? 'Nur du siehst diesen Termin.'
+                      : 'Die ganze WG sieht diesen Termin.'}
                 </Text>
               </View>
               <Switch
-                value={isPrivate}
+                value={isPrivate && !rotationActive}
                 onValueChange={setIsPrivate}
+                disabled={rotationActive}
                 trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
               />
             </View>
@@ -240,4 +348,16 @@ const styles = StyleSheet.create({
   },
   errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 16 },
   errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
+  sectionLabel: { fontSize: 15, fontWeight: '700', color: '#5C4033', marginTop: 4, marginBottom: 10 },
+  sectionHint: { fontSize: 13, color: '#8B6F5E', marginTop: -6, marginBottom: 10 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  chip: {
+    backgroundColor: '#F2E6DA', borderRadius: 20, paddingVertical: 9, paddingHorizontal: 15,
+    marginRight: 8, marginBottom: 8,
+  },
+  chipActive: { backgroundColor: '#E07A5F' },
+  chipActiveGreen: { backgroundColor: '#81B29A' },
+  chipText: { color: '#5C4033', fontSize: 15, fontWeight: '500' },
+  chipTextActive: { color: 'white' },
+    cardDisabled: { opacity: 0.6 },
 });

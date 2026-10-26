@@ -2,6 +2,13 @@ import { ActionSheet } from '@/components/action-sheet';
 import { formatDate, formatTime } from '@/components/date-time-field';
 import { EventForm } from '@/components/event-form';
 import { useDialog } from '@/lib/dialog';
+import {
+  expandOccurrences,
+  Occurrence,
+  Recurrence,
+  RECURRENCE_LABELS,
+  toDateKey,
+} from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,12 +22,21 @@ type CalendarEvent = {
   all_day: boolean;
   is_private: boolean;
   created_by: string | null;
+  recurrence: Recurrence;
+  recurrence_until: string | null;
+  rotation: string[] | null;
+  excluded_dates: string[];
 };
 
 type Member = {
   id: string;
   display_name: string | null;
 };
+
+type Occ = Occurrence<CalendarEvent>;
+
+const FIELDS =
+  'id, title, notes, starts_at, ends_at, all_day, is_private, created_by, recurrence, recurrence_until, rotation, excluded_dates';
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -59,18 +75,50 @@ function isSameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
+// Einmalige Termine im Zeitraum + alle Serien, die in den Zeitraum hineinreichen
+async function fetchEvents(from: Date, to: Date): Promise<CalendarEvent[]> {
+  const [single, recurring] = await Promise.all([
+    supabase
+      .from('calendar_events')
+      .select(FIELDS)
+      .eq('recurrence', 'none')
+      .gte('starts_at', from.toISOString())
+      .lt('starts_at', to.toISOString()),
+    supabase
+      .from('calendar_events')
+      .select(FIELDS)
+      .neq('recurrence', 'none')
+      .lt('starts_at', to.toISOString())
+      .or(`recurrence_until.is.null,recurrence_until.gte.${toDateKey(from)}`),
+  ]);
+
+  if (single.error) console.error(single.error);
+  if (recurring.error) console.error(recurring.error);
+  return [...(single.data ?? []), ...(recurring.data ?? [])];
+}
+
+// Aus Terminen die einzelnen Auftreten im Zeitraum berechnen, sortiert
+function toOccurrences(events: CalendarEvent[], from: Date, to: Date): Occ[] {
+  return events
+    .flatMap((e) => expandOccurrences(e, from, to))
+    .sort((a, b) => {
+      if (a.event.all_day !== b.event.all_day) return a.event.all_day ? -1 : 1;
+      return a.start.getTime() - b.start.getTime();
+    });
+}
+
 // ---------- Screen ----------
 
 export default function Kalender() {
+  const dialog = useDialog();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [upcoming, setUpcoming] = useState<CalendarEvent[]>([]);
+  const [occurrences, setOccurrences] = useState<Occ[]>([]);
+  const [upcoming, setUpcoming] = useState<Occ[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const dialog = useDialog();
+  const [selectedOcc, setSelectedOcc] = useState<Occ | null>(null);
 
   const today = new Date();
 
@@ -84,81 +132,65 @@ export default function Kalender() {
   const gridStartMs = gridStart.getTime();
   const gridLength = gridDays.length;
 
-  const loadEvents = useCallback(async () => {
+  const loadMonth = useCallback(async () => {
     const from = new Date(gridStartMs);
     const to = addDays(from, gridLength);
-    const { data, error } = await supabase
-      .from('calendar_events')
-      .select('id, title, notes, starts_at, ends_at, all_day, is_private, created_by')
-      .gte('starts_at', from.toISOString())
-      .lt('starts_at', to.toISOString())
-      .order('starts_at');
-    if (error) console.error(error);
-    else setEvents(data ?? []);
+    const events = await fetchEvents(from, to);
+    setOccurrences(toOccurrences(events, from, to));
   }, [gridStartMs, gridLength]);
 
-    // Die nächsten 3 Termine ab jetzt, unabhängig vom angezeigten Monat
-    const loadUpcoming = useCallback(async () => {
+  // Die nächsten 3 Termine ab jetzt (Serien werden 90 Tage vorausberechnet)
+  const loadUpcoming = useCallback(async () => {
     const now = new Date();
-    const { data, error } = await supabase
-      .from('calendar_events')
-      .select('id, title, notes, starts_at, ends_at, all_day, is_private, created_by')
-      .gte('starts_at', startOfDay(now).toISOString())
-      .order('starts_at')
-      .limit(10);
-    if (error) {
-      console.error(error);
-      return;
-    }
-    // Heutige Termine, die schon vorbei sind, rausfiltern (ganztägige bleiben)
-    const next = (data ?? []).filter((e) => {
-      if (e.all_day) return true;
-      const end = new Date(e.ends_at ?? e.starts_at);
-      return end >= now;
-    });
+    const from = startOfDay(now);
+    const to = addDays(from, 90);
+    const events = await fetchEvents(from, to);
+    const next = toOccurrences(events, from, to)
+      .filter((o) => (o.event.all_day ? true : (o.end ?? o.start) >= now))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
     setUpcoming(next.slice(0, 3));
   }, []);
+
+  const reload = useCallback(() => {
+    loadMonth();
+    loadUpcoming();
+  }, [loadMonth, loadUpcoming]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
     supabase
       .from('profiles')
       .select('id, display_name')
+      .order('display_name')
       .then(({ data, error }) => {
         if (error) console.error(error);
         else setMembers(data ?? []);
       });
   }, []);
 
-    useEffect(() => {
-    loadEvents();
-    loadUpcoming();
+  useEffect(() => {
+    reload();
 
     const channel = supabase
       .channel('calendar-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, () => {
-        loadEvents();
-        loadUpcoming();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, () => reload())
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadEvents, loadUpcoming]);
+  }, [reload]);
 
   // ---------- Navigation ----------
 
   function changeMonth(delta: number) {
     const newMonth = new Date(month.getFullYear(), month.getMonth() + delta, 1);
     setMonth(newMonth);
-    // Im aktuellen Monat → heute auswählen, sonst den 1.
     setSelectedDate(isSameMonth(newMonth, today) ? startOfDay(today) : newMonth);
   }
 
   function selectDay(day: Date) {
     setSelectedDate(day);
-    // Tag aus dem Vor- oder Folgemonat angetippt → dorthin wechseln
     if (!isSameMonth(day, month)) setMonth(startOfMonth(day));
   }
 
@@ -167,54 +199,126 @@ export default function Kalender() {
     setSelectedDate(startOfDay(today));
   }
 
-  // ---------- Termine ----------
+  // ---------- Anzeige-Helfer ----------
 
-  function eventsOn(day: Date) {
-    return events
-      .filter((e) => isSameDay(new Date(e.starts_at), day))
-      .sort((a, b) => Number(b.all_day) - Number(a.all_day)); // ganztägige zuerst
+  function occurrencesOn(day: Date) {
+    return occurrences.filter((o) => isSameDay(o.start, day));
+  }
+
+  function memberName(id: string | null) {
+    return members.find((m) => m.id === id)?.display_name ?? 'jemand';
   }
 
   function creatorName(id: string | null) {
-    if (id === userId) return 'dir';
-    return members.find((m) => m.id === id)?.display_name ?? 'jemandem';
+    return id === userId ? 'dir' : memberName(id);
   }
 
-  function timeLabel(e: CalendarEvent) {
-    if (e.all_day) return 'Ganztägig';
-    const start = formatTime(new Date(e.starts_at));
-    return e.ends_at ? `${start} – ${formatTime(new Date(e.ends_at))}` : start;
+  function assigneeLabel(id: string) {
+    return id === userId ? 'Du bist dran' : `${memberName(id)} ist dran`;
   }
 
-    function dayLabel(iso: string) {
-        const d = new Date(iso);
-        if (isSameDay(d, today)) return 'Heute';
-        if (isSameDay(d, addDays(today, 1))) return 'Morgen';
-        return formatDate(d);
-    }
+  function timeLabel(o: Occ) {
+    if (o.event.all_day) return 'Ganztägig';
+    const start = formatTime(o.start);
+    return o.end ? `${start} – ${formatTime(o.end)}` : start;
+  }
 
-  async function deleteEvent(e: CalendarEvent) {
-    setEvents((prev) => prev.filter((x) => x.id !== e.id));
-    setUpcoming((prev) => prev.filter((x) => x.id !== e.id));
+  function dayLabel(d: Date) {
+    if (isSameDay(d, today)) return 'Heute';
+    if (isSameDay(d, addDays(today, 1))) return 'Morgen';
+    return formatDate(d);
+  }
+
+  // ---------- Löschen ----------
+
+  async function deleteSeries(e: CalendarEvent) {
     const { error } = await supabase.from('calendar_events').delete().eq('id', e.id);
-    if (error) {
-      loadEvents();
-      loadUpcoming();
-      dialog.alert('Das hat nicht geklappt', error.message);
-    }
+    if (error) dialog.alert('Das hat nicht geklappt', error.message);
+    else reload();
   }
 
-  function confirmDeleteEvent(e: CalendarEvent) {
+  async function skipOccurrence(o: Occ) {
+    const { error } = await supabase
+      .from('calendar_events')
+      .update({ excluded_dates: [...o.event.excluded_dates, o.dateKey] })
+      .eq('id', o.event.id);
+    if (error) dialog.alert('Das hat nicht geklappt', error.message);
+    else reload();
+  }
+
+  function confirmDelete(o: Occ) {
+    const isSeries = o.event.recurrence !== 'none';
     dialog.confirm({
-      title: `„${e.title}“ löschen?`,
-      message: e.is_private ? undefined : 'Der Termin verschwindet für die ganze WG.',
+      title: isSeries ? 'Ganze Serie löschen?' : `„${o.event.title}“ löschen?`,
+      message: isSeries
+        ? 'Alle Termine dieser Serie verschwinden, auch die zukünftigen.'
+        : o.event.is_private
+          ? undefined
+          : 'Der Termin verschwindet für die ganze WG.',
       confirmLabel: 'Löschen',
       destructive: true,
-      onConfirm: () => deleteEvent(e),
+      onConfirm: () => deleteSeries(o.event),
     });
   }
 
-  const dayEvents = eventsOn(selectedDate);
+  function sheetActions(o: Occ) {
+    if (o.event.created_by !== userId) return [];
+    if (o.event.recurrence === 'none') {
+      return [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDelete(o) }];
+    }
+    return [
+      { label: 'Nur diesen Termin auslassen', emoji: '⏭️', onPress: () => skipOccurrence(o) },
+      { label: 'Ganze Serie löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDelete(o) },
+    ];
+  }
+
+  function sheetSubtitle(o: Occ) {
+    return [
+      `${dayLabel(o.start)} · ${timeLabel(o)}`,
+      o.event.recurrence !== 'none' && `🔁 ${RECURRENCE_LABELS[o.event.recurrence]}`,
+      o.assignee && assigneeLabel(o.assignee),
+      o.event.is_private ? 'privat' : `eingetragen von ${creatorName(o.event.created_by)}`,
+      o.event.notes,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  // ---------- Eine Zeile in der Terminliste ----------
+
+  function renderRow(o: Occ, i: number, showDay: boolean) {
+    return (
+      <Pressable
+        key={`${o.event.id}-${o.dateKey}`}
+        style={[styles.eventRow, i > 0 && styles.eventRowBorder]}
+        onPress={() => setSelectedOcc(o)}
+      >
+        {showDay ? (
+          <View style={styles.upcomingDate}>
+            <Text style={styles.upcomingDay}>{dayLabel(o.start)}</Text>
+            <Text style={styles.upcomingTime}>{o.event.all_day ? 'ganztägig' : formatTime(o.start)}</Text>
+          </View>
+        ) : (
+          <View style={[styles.eventBar, o.event.is_private && styles.eventBarPrivate]} />
+        )}
+        <View style={styles.eventInfo}>
+          <Text style={styles.eventTitle}>
+            {o.event.is_private ? '🔒 ' : ''}
+            {o.event.title}
+            {o.event.recurrence !== 'none' ? ' 🔁' : ''}
+          </Text>
+          {!showDay && <Text style={styles.eventMeta}>{timeLabel(o)}</Text>}
+          {o.assignee && (
+            <Text style={[styles.assignee, o.assignee === userId && styles.assigneeMe]}>
+              {assigneeLabel(o.assignee)}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  }
+
+  const dayOccurrences = occurrencesOn(selectedDate);
   const monthLabel = month.toLocaleDateString('de-AT', { month: 'long', year: 'numeric' });
   const selectedLabel = selectedDate.toLocaleDateString('de-AT', { weekday: 'long', day: 'numeric', month: 'long' });
   const showTodayButton = !isSameDay(selectedDate, today) || !isSameMonth(month, today);
@@ -250,7 +354,7 @@ export default function Kalender() {
               const inMonth = isSameMonth(day, month);
               const selected = isSameDay(day, selectedDate);
               const isToday = isSameDay(day, today);
-              const count = eventsOn(day).length;
+              const count = occurrencesOn(day).length;
 
               return (
                 <Pressable key={day.toISOString()} style={styles.dayCell} onPress={() => selectDay(day)}>
@@ -291,54 +395,18 @@ export default function Kalender() {
 
         {/* Termine des ausgewählten Tages */}
         <Text style={styles.sectionTitle}>{selectedLabel}</Text>
-
-        {dayEvents.length === 0 ? (
+        {dayOccurrences.length === 0 ? (
           <Text style={styles.empty}>Nichts geplant. ☕</Text>
         ) : (
-          <View style={styles.card}>
-            {dayEvents.map((e, i) => (
-              <Pressable
-                key={e.id}
-                style={[styles.eventRow, i > 0 && styles.eventRowBorder]}
-                onPress={() => setSelectedEvent(e)}
-              >
-                <View style={[styles.eventBar, e.is_private && styles.eventBarPrivate]} />
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>
-                    {e.is_private ? '🔒 ' : ''}
-                    {e.title}
-                  </Text>
-                  <Text style={styles.eventMeta}>{timeLabel(e)}</Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
+          <View style={styles.card}>{dayOccurrences.map((o, i) => renderRow(o, i, false))}</View>
         )}
-                {/* Was steht an */}
+
+        {/* Was steht an */}
         <Text style={styles.sectionTitle}>Was steht an</Text>
         {upcoming.length === 0 ? (
           <Text style={styles.empty}>Keine anstehenden Termine.</Text>
         ) : (
-          <View style={styles.card}>
-            {upcoming.map((e, i) => (
-              <Pressable
-                key={e.id}
-                style={[styles.eventRow, i > 0 && styles.eventRowBorder]}
-                onPress={() => setSelectedEvent(e)}
-              >
-                <View style={styles.upcomingDate}>
-                  <Text style={styles.upcomingDay}>{dayLabel(e.starts_at)}</Text>
-                  <Text style={styles.upcomingTime}>{e.all_day ? 'ganztägig' : formatTime(new Date(e.starts_at))}</Text>
-                </View>
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>
-                    {e.is_private ? '🔒 ' : ''}
-                    {e.title}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
+          <View style={styles.card}>{upcoming.map((o, i) => renderRow(o, i, true))}</View>
         )}
       </ScrollView>
 
@@ -350,33 +418,18 @@ export default function Kalender() {
       <EventForm
         visible={showForm}
         initialDate={selectedDate}
+        members={members}
+        userId={userId}
         onClose={() => setShowForm(false)}
-        onSaved={() => {
-          loadEvents();
-          loadUpcoming();
-        }}
+        onSaved={reload}
       />
 
       <ActionSheet
-        visible={selectedEvent !== null}
-        title={selectedEvent?.title}
-        subtitle={
-          selectedEvent
-            ? [
-                timeLabel(selectedEvent),
-                selectedEvent.is_private ? 'privat' : `eingetragen von ${creatorName(selectedEvent.created_by)}`,
-                selectedEvent.notes,
-              ]
-                .filter(Boolean)
-                .join('\n')
-            : undefined
-        }
-        actions={
-          selectedEvent && selectedEvent.created_by === userId
-            ? [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDeleteEvent(selectedEvent) }]
-            : []
-        }
-        onClose={() => setSelectedEvent(null)}
+        visible={selectedOcc !== null}
+        title={selectedOcc?.event.title}
+        subtitle={selectedOcc ? sheetSubtitle(selectedOcc) : undefined}
+        actions={selectedOcc ? sheetActions(selectedOcc) : []}
+        onClose={() => setSelectedOcc(null)}
       />
     </View>
   );
@@ -424,6 +477,12 @@ const styles = StyleSheet.create({
   eventInfo: { flex: 1 },
   eventTitle: { fontSize: 16, color: '#5C4033', fontWeight: '600' },
   eventMeta: { fontSize: 14, color: '#8B6F5E', marginTop: 2 },
+  assignee: { fontSize: 13, color: '#81B29A', fontWeight: '600', marginTop: 3 },
+  assigneeMe: { color: '#E07A5F' },
+
+  upcomingDate: { width: 92, marginRight: 12 },
+  upcomingDay: { fontSize: 14, fontWeight: '700', color: '#E07A5F' },
+  upcomingTime: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
 
   fab: {
     position: 'absolute', right: 24, bottom: 24, width: 56, height: 56, borderRadius: 28,
@@ -432,7 +491,4 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { color: 'white', fontSize: 30, fontWeight: '500', marginTop: -2 },
-  upcomingDate: { width: 92, marginRight: 12 },
-  upcomingDay: { fontSize: 14, fontWeight: '700', color: '#E07A5F' },
-  upcomingTime: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
 });
