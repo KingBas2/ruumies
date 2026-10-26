@@ -71,6 +71,7 @@ export default function Finanzen() {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const dialog = useDialog();
 
   const loadAll = useCallback(async () => {
@@ -130,6 +131,16 @@ export default function Finanzen() {
     // Löschen darf nur, wer bezahlt bzw. überwiesen hat
   function canDelete(entry: HistoryEntry) {
     return entry.kind === 'expense' ? entry.data.paid_by === userId : entry.data.from_user === userId;
+  }
+
+  function openNew() {
+    setEditingExpense(null);
+    setShowForm(true);
+  }
+
+  function openEdit(e: Expense) {
+    setEditingExpense(e);
+    setShowForm(true);
   }
 
   // ---------- Aktionen ----------
@@ -266,7 +277,7 @@ export default function Finanzen() {
       </ScrollView>
 
       {/* Schwebender Plus-Button */}
-      <Pressable style={styles.fab} onPress={() => setShowForm(true)}>
+      <Pressable style={styles.fab} onPress={openNew}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
 
@@ -274,6 +285,7 @@ export default function Finanzen() {
         visible={showForm}
         members={members}
         userId={userId}
+        editExpense={editingExpense}
         onClose={() => setShowForm(false)}
         onSaved={loadAll}
       />
@@ -290,7 +302,12 @@ export default function Finanzen() {
         subtitle={selectedEntry ? formatEuro(selectedEntry.data.amount_cents) : undefined}
         actions={
           selectedEntry
-            ? [{ label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteEntry(selectedEntry) }]
+            ? [
+                ...(selectedEntry.kind === 'expense'
+                  ? [{ label: 'Bearbeiten', emoji: '✏️', onPress: () => openEdit(selectedEntry.data as Expense) }]
+                  : []),
+                { label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteEntry(selectedEntry) },
+              ]
             : []
         }
         onClose={() => setSelectedEntry(null)}

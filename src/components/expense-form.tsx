@@ -9,10 +9,20 @@ export type Member = {
   display_name: string | null;
 };
 
+// Eine bestehende Ausgabe, die bearbeitet wird
+export type EditableExpense = {
+  id: string;
+  title: string;
+  amount_cents: number;
+  paid_by: string;
+  spent_on: string;
+};
+
 type Props = {
   visible: boolean;
   members: Member[];
   userId: string | null;
+  editExpense?: EditableExpense | null;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -25,7 +35,7 @@ function toDateString(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
-export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Props) {
+export function ExpenseForm({ visible, members, userId, editExpense, onClose, onSaved }: Props) {
   const [title, setTitle] = useState('');
   const [amountText, setAmountText] = useState('');
   const [paidBy, setPaidBy] = useState<string | null>(null);
@@ -34,16 +44,37 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Beim Öffnen: ich habe bezahlt, alle teilen, heute
+  // Beim Öffnen: Werte der Ausgabe übernehmen (Bearbeiten) oder zurücksetzen (Neu)
   useEffect(() => {
     if (!visible) return;
+    setError(null);
+
+    if (editExpense) {
+      setTitle(editExpense.title);
+      setAmountText((editExpense.amount_cents / 100).toFixed(2).replace('.', ','));
+      setPaidBy(editExpense.paid_by);
+      const [y, m, d] = editExpense.spent_on.split('-').map(Number);
+      setDate(new Date(y, m - 1, d));
+
+      // Bisherige Aufteilung laden
+      setParticipants([]);
+      supabase
+        .from('expense_splits')
+        .select('user_id')
+        .eq('expense_id', editExpense.id)
+        .then(({ data, error }) => {
+          if (error) console.error(error);
+          else setParticipants((data ?? []).map((s) => s.user_id));
+        });
+      return;
+    }
+
     setTitle('');
     setAmountText('');
     setPaidBy(userId);
     setParticipants(members.map((m) => m.id));
     setDate(new Date());
-    setError(null);
-  }, [visible, userId, members]);
+  }, [visible, userId, members, editExpense]);
 
   function nameOf(m: Member) {
     return m.id === userId ? 'Ich' : m.display_name ?? '?';
@@ -75,13 +106,17 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
     }
 
     setSaving(true);
-    const { error } = await supabase.rpc('create_expense', {
+    const params = {
       p_title: title.trim(),
       p_amount_cents: amountCents,
       p_paid_by: paidBy,
       p_participants: participants,
       p_spent_on: toDateString(date),
-    });
+    };
+
+    const { error } = editExpense
+      ? await supabase.rpc('update_expense', { p_expense_id: editExpense.id, ...params })
+      : await supabase.rpc('create_expense', params);
     setSaving(false);
 
     if (error) {
@@ -100,7 +135,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
           <Pressable onPress={onClose} hitSlop={10}>
             <Text style={styles.headerCancel}>Abbrechen</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Neue Ausgabe</Text>
+          <Text style={styles.headerTitle}>{editExpense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}</Text>
           <Pressable onPress={save} disabled={saving} hitSlop={10}>
             <Text style={[styles.headerSave, saving && styles.disabled]}>Sichern</Text>
           </Pressable>
@@ -112,6 +147,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
+
           {/* Betrag */}
           <View style={styles.amountBox}>
             <TextInput
@@ -121,7 +157,7 @@ export function ExpenseForm({ visible, members, userId, onClose, onSaved }: Prop
               value={amountText}
               onChangeText={setAmountText}
               keyboardType="decimal-pad"
-              autoFocus
+              autoFocus={!editExpense}
             />
             <Text style={styles.amountCurrency}>€</Text>
           </View>
@@ -201,6 +237,8 @@ const styles = StyleSheet.create({
   headerSave: { fontSize: 16, color: '#E07A5F', fontWeight: '700' },
   disabled: { opacity: 0.4 },
   content: { padding: 20 },
+  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 8 },
+  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
 
   amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 16 },
   amountInput: { fontSize: 48, fontWeight: '700', color: '#5C4033', minWidth: 120, textAlign: 'center' },
@@ -223,6 +261,4 @@ const styles = StyleSheet.create({
   chipTextActive: { color: 'white' },
 
   preview: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, marginTop: 16 },
-  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 8 },
-  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
 });

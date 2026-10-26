@@ -28,9 +28,9 @@ type Props = {
   initialDate: Date;
   members: Member[];
   userId: string | null;
+  editEvent?: EditableEvent | null;
   onClose: () => void;
   onSaved: () => void;
-  editEvent?: EditableEvent | null;
 };
 
 // Datum von "picked" übernehmen, Uhrzeit von "base" behalten
@@ -98,6 +98,9 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
     setRotation([]);
   }, [visible, initialDate, editEvent]);
 
+  // Sobald jemand reihum dran ist, ist der Termin automatisch gemeinsam
+  const rotationActive = recurrence !== 'none' && rotation.length > 0;
+
   function toggleEnd(on: boolean) {
     if (on) {
       const e = new Date(start);
@@ -108,10 +111,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
     }
   }
 
-    // Sobald jemand reihum dran ist, ist der Termin automatisch gemeinsam
-  const rotationActive = recurrence !== 'none' && rotation.length > 0;
-
-    function toggleUntil(on: boolean) {
+  function toggleUntil(on: boolean) {
     if (on) {
       const u = new Date(start);
       u.setMonth(u.getMonth() + 3); // Vorschlag: in 3 Monaten
@@ -147,7 +147,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
       }
     }
 
-      if (recurrence !== 'none' && until && toDateKey(until) < toDateKey(startsAt)) {
+    if (recurrence !== 'none' && until && toDateKey(until) < toDateKey(startsAt)) {
       setError('Das Enddatum der Wiederholung muss nach dem ersten Termin liegen.');
       return;
     }
@@ -198,6 +198,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
+
           <TextInput
             style={styles.titleInput}
             placeholder="Was steht an?"
@@ -256,7 +257,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
             )}
           </View>
 
-                    {/* Wiederholen */}
+          {/* Wiederholen */}
           <Text style={styles.sectionLabel}>Wiederholen</Text>
           <View style={styles.chipWrap}>
             {(Object.keys(RECURRENCE_LABELS) as Recurrence[]).map((r) => (
@@ -367,11 +368,14 @@ const styles = StyleSheet.create({
   headerSave: { fontSize: 16, color: '#E07A5F', fontWeight: '700' },
   disabled: { opacity: 0.4 },
   content: { padding: 20 },
+  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 16 },
+  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
   titleInput: {
     backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 18,
     fontWeight: '600', color: '#5C4033', marginBottom: 16,
   },
   card: { backgroundColor: 'white', borderRadius: 14, paddingHorizontal: 16, marginBottom: 16 },
+  cardDisabled: { opacity: 0.6 },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     minHeight: 52, paddingVertical: 6,
@@ -380,12 +384,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, color: '#5C4033' },
   labelBlock: { flex: 1, marginRight: 12 },
   sublabel: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
-  notesInput: {
-    backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16,
-    minHeight: 100, textAlignVertical: 'top', color: '#5C4033',
-  },
-  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
   sectionLabel: { fontSize: 15, fontWeight: '700', color: '#5C4033', marginTop: 4, marginBottom: 10 },
   sectionHint: { fontSize: 13, color: '#8B6F5E', marginTop: -6, marginBottom: 10 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
@@ -397,5 +395,8 @@ const styles = StyleSheet.create({
   chipActiveGreen: { backgroundColor: '#81B29A' },
   chipText: { color: '#5C4033', fontSize: 15, fontWeight: '500' },
   chipTextActive: { color: 'white' },
-    cardDisabled: { opacity: 0.6 },
+  notesInput: {
+    backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16,
+    minHeight: 100, textAlignVertical: 'top', color: '#5C4033',
+  },
 });
