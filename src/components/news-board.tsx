@@ -40,6 +40,7 @@ export function NewsBoard() {
   const [sending, setSending] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const dialog = useDialog();
 
   const loadPosts = useCallback(async () => {
@@ -78,19 +79,31 @@ export function NewsBoard() {
     return members.find((m) => m.id === id)?.display_name ?? 'Ehemalig';
   }
 
+  function startEdit(post: Post) {
+    setEditingPost(post);
+    setText(post.content);
+  }
+
+  function cancelEdit() {
+    setEditingPost(null);
+    setText('');
+  }
+
   async function sendPost() {
     const trimmed = text.trim();
     if (!trimmed) return;
 
     setSending(true);
-    const { error } = await supabase.from('news_posts').insert({ content: trimmed });
+    const { error } = editingPost
+      ? await supabase.from('news_posts').update({ content: trimmed }).eq('id', editingPost.id)
+      : await supabase.from('news_posts').insert({ content: trimmed });
     setSending(false);
 
     if (error) {
       dialog.alert('Das hat nicht geklappt', error.message);
       return;
     }
-    setText('');
+    cancelEdit();
     loadPosts();
   }
 
@@ -110,6 +123,15 @@ export function NewsBoard() {
       <Text style={styles.sectionTitle}>📌 Pinnwand</Text>
 
       <View style={styles.card}>
+
+         {editingPost && (
+          <View style={styles.editBanner}>
+            <Text style={styles.editBannerText}>✏️ Beitrag bearbeiten</Text>
+            <Pressable onPress={cancelEdit} hitSlop={8}>
+              <Text style={styles.editCancel}>Abbrechen</Text>
+            </Pressable>
+          </View>
+        )}
         {/* Neuer Beitrag */}
         <View style={styles.inputRow}>
           <TextInput
@@ -125,7 +147,7 @@ export function NewsBoard() {
             onPress={sendPost}
             disabled={!text.trim() || sending}
           >
-            <Text style={styles.sendButtonText}>↑</Text>
+            <Text style={styles.sendButtonText}>{editingPost ? '✓' : '↑'}</Text>
           </Pressable>
         </View>
 
@@ -163,7 +185,10 @@ export function NewsBoard() {
         subtitle={selectedPost?.content}
         actions={
           selectedPost
-            ? [{ label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deletePost(selectedPost) }]
+            ? [
+                { label: 'Bearbeiten', emoji: '✏️', onPress: () => startEdit(selectedPost) },
+                { label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deletePost(selectedPost) },
+              ]
             : []
         }
         onClose={() => setSelectedPost(null)}
@@ -194,4 +219,10 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, paddingVertical: 12 },
   moreButton: { paddingTop: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F2E6DA' },
   moreText: { color: '#E07A5F', fontSize: 15, fontWeight: '600' },
+  editBanner: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#F2E6DA', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
+  },
+  editBannerText: { fontSize: 14, color: '#5C4033', fontWeight: '600' },
+  editCancel: { fontSize: 14, color: '#E07A5F', fontWeight: '600' },
 });
