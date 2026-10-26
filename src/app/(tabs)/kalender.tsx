@@ -119,6 +119,7 @@ export default function Kalender() {
   const [userId, setUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedOcc, setSelectedOcc] = useState<Occ | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const today = new Date();
 
@@ -261,12 +262,26 @@ export default function Kalender() {
     });
   }
 
+  function openNew() {
+    setEditingEvent(null);
+    setShowForm(true);
+  }
+
+  function openEdit(e: CalendarEvent) {
+    setEditingEvent(e);
+    setShowForm(true);
+  }
+
   function sheetActions(o: Occ) {
     if (o.event.created_by !== userId) return [];
     if (o.event.recurrence === 'none') {
-      return [{ label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDelete(o) }];
+      return [
+        { label: 'Bearbeiten', emoji: '✏️', onPress: () => openEdit(o.event) },
+        { label: 'Termin löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDelete(o) },
+      ];
     }
     return [
+      { label: 'Serie bearbeiten', emoji: '✏️', onPress: () => openEdit(o.event) },
       { label: 'Nur diesen Termin auslassen', emoji: '⏭️', onPress: () => skipOccurrence(o) },
       { label: 'Ganze Serie löschen', emoji: '🗑️', destructive: true, onPress: () => confirmDelete(o) },
     ];
@@ -410,8 +425,8 @@ export default function Kalender() {
         )}
       </ScrollView>
 
-      {/* Schwebender Plus-Button */}
-      <Pressable style={styles.fab} onPress={() => setShowForm(true)}>
+      {/* Schwebender Plus-Button */}      
+      <Pressable style={styles.fab} onPress={openNew}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
 
@@ -420,6 +435,7 @@ export default function Kalender() {
         initialDate={selectedDate}
         members={members}
         userId={userId}
+        editEvent={editingEvent}
         onClose={() => setShowForm(false)}
         onSaved={reload}
       />

@@ -9,6 +9,20 @@ type Member = {
   display_name: string | null;
 };
 
+// Ein bestehender Termin, der bearbeitet wird
+export type EditableEvent = {
+  id: string;
+  title: string;
+  notes: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  is_private: boolean;
+  recurrence: Recurrence;
+  recurrence_until: string | null;
+  rotation: string[] | null;
+};
+
 type Props = {
   visible: boolean;
   initialDate: Date;
@@ -16,6 +30,7 @@ type Props = {
   userId: string | null;
   onClose: () => void;
   onSaved: () => void;
+  editEvent?: EditableEvent | null;
 };
 
 // Datum von "picked" übernehmen, Uhrzeit von "base" behalten
@@ -32,7 +47,7 @@ function withTime(base: Date, picked: Date) {
   return d;
 }
 
-export function EventForm({ visible, initialDate, members, userId, onClose, onSaved }: Props) {
+export function EventForm({ visible, initialDate, members, userId, editEvent, onClose, onSaved }: Props) {
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [allDay, setAllDay] = useState(false);
@@ -45,9 +60,29 @@ export function EventForm({ visible, initialDate, members, userId, onClose, onSa
   const [until, setUntil] = useState<Date | null>(null);
   const [rotation, setRotation] = useState<string[]>([]);
 
-  // Beim Öffnen: alles zurücksetzen, Start = ausgewählter Tag zur nächsten vollen Stunde
+  // Beim Öffnen: Werte des Termins übernehmen (Bearbeiten) oder zurücksetzen (Neu)
   useEffect(() => {
     if (!visible) return;
+    setError(null);
+
+    if (editEvent) {
+      setTitle(editEvent.title);
+      setNotes(editEvent.notes ?? '');
+      setAllDay(editEvent.all_day);
+      setIsPrivate(editEvent.is_private);
+      setStart(new Date(editEvent.starts_at));
+      setEnd(editEvent.ends_at ? new Date(editEvent.ends_at) : null);
+      setRecurrence(editEvent.recurrence);
+      if (editEvent.recurrence_until) {
+        const [y, m, d] = editEvent.recurrence_until.split('-').map(Number);
+        setUntil(new Date(y, m - 1, d));
+      } else {
+        setUntil(null);
+      }
+      setRotation(editEvent.rotation ?? []);
+      return;
+    }
+
     const nextHour = Math.min(new Date().getHours() + 1, 23);
     const s = new Date(initialDate);
     s.setHours(nextHour, 0, 0, 0);
@@ -58,11 +93,10 @@ export function EventForm({ visible, initialDate, members, userId, onClose, onSa
     setIsPrivate(false);
     setStart(s);
     setEnd(null);
-    setError(null);
     setRecurrence('none');
     setUntil(null);
     setRotation([]);
-  }, [visible, initialDate]);
+  }, [visible, initialDate, editEvent]);
 
   function toggleEnd(on: boolean) {
     if (on) {
@@ -119,7 +153,7 @@ export function EventForm({ visible, initialDate, members, userId, onClose, onSa
     }
 
     setSaving(true);
-    const { error } = await supabase.from('calendar_events').insert({
+    const payload = {
       title: trimmed,
       notes: notes.trim() || null,
       starts_at: startsAt.toISOString(),
@@ -129,7 +163,11 @@ export function EventForm({ visible, initialDate, members, userId, onClose, onSa
       recurrence,
       recurrence_until: recurrence !== 'none' && until ? toDateKey(until) : null,
       rotation: recurrence !== 'none' && rotation.length > 0 ? rotation : null,
-    });
+    };
+
+    const { error } = editEvent
+      ? await supabase.from('calendar_events').update(payload).eq('id', editEvent.id)
+      : await supabase.from('calendar_events').insert(payload);
     setSaving(false);
 
     if (error) {
@@ -148,7 +186,7 @@ export function EventForm({ visible, initialDate, members, userId, onClose, onSa
           <Pressable onPress={onClose} hitSlop={10}>
             <Text style={styles.headerCancel}>Abbrechen</Text>
           </Pressable>
-          <Text style={styles.headerTitle}>Neuer Termin</Text>
+          <Text style={styles.headerTitle}>{editEvent ? 'Termin bearbeiten' : 'Neuer Termin'}</Text>
           <Pressable onPress={save} disabled={saving} hitSlop={10}>
             <Text style={[styles.headerSave, saving && styles.disabled]}>Sichern</Text>
           </Pressable>
