@@ -2,7 +2,9 @@ import { DateTimeField } from '@/components/date-time-field';
 import { formatEuro, parseAmount } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 export type Member = {
   id: string;
@@ -36,6 +38,7 @@ function toDateString(d: Date) {
 }
 
 export function ExpenseForm({ visible, members, userId, editExpense, onClose, onSaved }: Props) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [amountText, setAmountText] = useState('');
   const [paidBy, setPaidBy] = useState<string | null>(null);
@@ -131,7 +134,7 @@ export function ExpenseForm({ visible, members, userId, editExpense, onClose, on
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={styles.screen}>
         {/* Kopfzeile */}
-        <View style={styles.header}>
+        <View style={[styles.header, Platform.OS === 'android' && { paddingTop: insets.top + 12 }]}>
           <Pressable onPress={onClose} hitSlop={10}>
             <Text style={styles.headerCancel}>Abbrechen</Text>
           </Pressable>

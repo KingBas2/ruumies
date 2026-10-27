@@ -2,7 +2,8 @@ import { DateTimeField } from '@/components/date-time-field';
 import { Recurrence, RECURRENCE_LABELS, toDateKey } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Member = {
   id: string;
@@ -48,6 +49,7 @@ function withTime(base: Date, picked: Date) {
 }
 
 export function EventForm({ visible, initialDate, members, userId, editEvent, onClose, onSaved }: Props) {
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [allDay, setAllDay] = useState(false);
@@ -182,7 +184,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={styles.screen}>
         {/* Kopfzeile */}
-        <View style={styles.header}>
+        <View style={[styles.header, Platform.OS === 'android' && { paddingTop: insets.top + 12 }]}>
           <Pressable onPress={onClose} hitSlop={10}>
             <Text style={styles.headerCancel}>Abbrechen</Text>
           </Pressable>
