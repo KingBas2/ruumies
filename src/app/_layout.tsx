@@ -1,6 +1,6 @@
 import { DialogProvider } from '@/lib/dialog';
 import { HouseholdProvider, useHousehold } from '@/lib/household';
-import { registerForPushNotifications } from '@/lib/notifications';
+import { registerForPushNotifications, useNotificationNavigation } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { Stack } from 'expo-router';
@@ -43,10 +43,12 @@ export default function RootLayout() {
 
 function RootNavigator({ isLoggedIn }: { isLoggedIn: boolean }) {
   const { household, loading } = useHousehold();
+  const hasHousehold = !!household;
+
+  // Beim Antippen einer Benachrichtigung zur passenden Seite springen
+  useNotificationNavigation(isLoggedIn && hasHousehold && !loading);
 
   if (isLoggedIn && loading) return null;
-
-  const hasHousehold = !!household;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 // Wie Benachrichtigungen angezeigt werden, wenn die App gerade offen ist
@@ -70,4 +72,30 @@ export async function unregisterPushNotifications() {
   } catch (e) {
     console.error('Push-Token konnte nicht entfernt werden', e);
   }
+}
+
+// Welche Info in der Benachrichtigung zu welcher Seite führt
+const SCREEN_ROUTES = {
+  home: '/',
+  kalender: '/kalender',
+  haushalt: '/haushalt',
+  finanzen: '/finanzen',
+} as const;
+
+type ScreenName = keyof typeof SCREEN_ROUTES;
+
+// Beim Antippen einer Benachrichtigung zur passenden Seite springen
+export function useNotificationNavigation(enabled: boolean) {
+  const response = Notifications.useLastNotificationResponse();
+
+  useEffect(() => {
+    if (!enabled || !response) return;
+
+    const screen = response.notification.request.content.data?.screen as ScreenName | undefined;
+    const route = screen ? SCREEN_ROUTES[screen] : undefined;
+    if (route) router.navigate(route);
+
+    // Erledigt merken, damit es beim nächsten Start nicht nochmal passiert
+    Notifications.clearLastNotificationResponseAsync();
+  }, [enabled, response]);
 }
