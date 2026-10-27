@@ -1,5 +1,6 @@
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
+import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -66,7 +67,13 @@ export default function Onboarding() {
         </Text>
       </Pressable>
 
-      <Pressable style={styles.logout} onPress={() => supabase.auth.signOut()}>
+      <Pressable
+        style={styles.logout}
+        onPress={async () => {
+          await unregisterPushNotifications();
+          await supabase.auth.signOut();
+        }}
+      >
         <Text style={styles.logoutText}>Abmelden</Text>
       </Pressable>
     </View>

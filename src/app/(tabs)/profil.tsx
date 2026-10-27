@@ -1,5 +1,6 @@
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
+import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -71,7 +72,10 @@ export default function Profil() {
       title: 'Abmelden?',
       message: 'Du kannst dich jederzeit wieder anmelden.',
       confirmLabel: 'Abmelden',
-      onConfirm: () => supabase.auth.signOut(),
+      onConfirm: async () => {
+        await unregisterPushNotifications();
+        await supabase.auth.signOut();
+      },
     });
   }
 
