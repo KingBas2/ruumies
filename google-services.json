@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "628810828847",
+    "project_id": "ruumies-a835f",
+    "storage_bucket": "ruumies-a835f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628810828847:android:d326f92efd3b760ef88ada",
+        "android_client_info": {
+          "package_name": "com.kingbas.ruumies"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoqm3Zu-zYVR1QRtlDDiEx7_cACz9Kx-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
