@@ -2,6 +2,7 @@ import { ActionSheet } from '@/components/action-sheet';
 import { formatDate, formatTime } from '@/components/date-time-field';
 import { EventForm } from '@/components/event-form';
 import { useDialog } from '@/lib/dialog';
+import { useScreenTopPadding } from '@/lib/layout';
 import {
   expandOccurrences,
   Occurrence,
@@ -111,6 +112,7 @@ function toOccurrences(events: CalendarEvent[], from: Date, to: Date): Occ[] {
 // ---------- Screen ----------
 
 export default function Kalender() {
+  const topPadding = useScreenTopPadding();
   const dialog = useDialog();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
@@ -341,7 +343,7 @@ export default function Kalender() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
         <Text style={styles.title}>Kalender</Text>
 
         {/* Monats-Navigation */}

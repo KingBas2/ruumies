@@ -1,6 +1,7 @@
 import { NewsBoard } from '@/components/news-board';
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
+import { useScreenTopPadding } from '@/lib/layout';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ function guestLabel(n: number) {
 }
 
 export default function Home() {
+  const topPadding = useScreenTopPadding();
   const { household } = useHousehold();
   const [userId, setUserId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -80,7 +82,7 @@ export default function Home() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingTop: topPadding }]}>
       <Text style={styles.wgName}>{household?.name}</Text>
       <Text style={styles.summary}>
         {homeCount} von {members.length} zuhause

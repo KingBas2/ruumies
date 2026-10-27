@@ -1,6 +1,7 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { ExpenseForm, Member } from '@/components/expense-form';
 import { useDialog } from '@/lib/dialog';
+import { useScreenTopPadding } from '@/lib/layout';
 import { formatEuro } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -65,6 +66,7 @@ function shortDate(iso: string) {
 }
 
 export default function Finanzen() {
+  const topPadding = useScreenTopPadding();
   const [userId, setUserId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
@@ -190,7 +192,7 @@ export default function Finanzen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
         <Text style={styles.title}>Finanzen</Text>
 
         {/* Mein Saldo */}

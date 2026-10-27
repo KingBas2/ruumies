@@ -1,15 +1,17 @@
 import { Inventory } from '@/components/inventory';
 import { ShoppingLists } from '@/components/shopping-lists';
+import { useScreenTopPadding } from '@/lib/layout';
 import { colors } from '@/lib/theme';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function Haushalt() {
+  const topPadding = useScreenTopPadding();
   const [section, setSection] = useState<'list' | 'stock'>('list');
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding }]}>
         <Text style={styles.title}>Haushalt</Text>
         <View style={styles.tabs}>
           <Pressable

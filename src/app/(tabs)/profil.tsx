@@ -1,5 +1,6 @@
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
+import { useScreenTopPadding } from '@/lib/layout';
 import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -16,6 +17,7 @@ const PREF_OPTIONS: { key: PrefKey; label: string; hint: string }[] = [
 ];
 
 export default function Profil() {
+  const topPadding = useScreenTopPadding();
   const { household } = useHousehold();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | undefined>();
@@ -109,7 +111,7 @@ export default function Profil() {
   const hasChanges = name.trim() !== savedName;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingTop: topPadding }]}>
       <Text style={styles.title}>Profil</Text>
 
       <Text style={styles.sectionTitle}>Benachrichtigungen</Text>
