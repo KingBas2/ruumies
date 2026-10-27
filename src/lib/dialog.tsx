@@ -1,3 +1,4 @@
+import { colors } from '@/lib/theme';
 import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -101,18 +102,18 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: 'rgba(60, 40, 30, 0.35)',
     alignItems: 'center', justifyContent: 'center', padding: 32,
   },
-  box: { backgroundColor: '#FFF8F0', borderRadius: 24, padding: 24, width: '100%', maxWidth: 360 },
-  title: { fontSize: 19, fontWeight: '700', color: '#5C4033', textAlign: 'center' },
-  message: { fontSize: 15, color: '#8B6F5E', textAlign: 'center', marginTop: 8, lineHeight: 21 },
+  box: { backgroundColor: colors.background, borderRadius: 24, padding: 24, width: '100%', maxWidth: 360 },
+  title: { fontSize: 19, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  message: { fontSize: 15, color: colors.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 21 },
   buttons: { flexDirection: 'row', marginTop: 22 },
   button: {
-    flex: 1, backgroundColor: '#E07A5F', borderRadius: 14,
+    flex: 1, backgroundColor: colors.accent, borderRadius: 14,
     paddingVertical: 14, alignItems: 'center',
   },
   buttonSpacing: { marginLeft: 10 },
-  buttonCancel: { backgroundColor: '#F2E6DA' },
-  buttonDestructive: { backgroundColor: '#C0503A' },
+  buttonCancel: { backgroundColor: colors.surfaceMuted },
+  buttonDestructive: { backgroundColor: colors.danger },
   buttonPressed: { opacity: 0.8 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  buttonTextCancel: { color: '#5C4033' },
+  buttonTextCancel: { color: colors.text },
 });

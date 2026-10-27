@@ -1,6 +1,7 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -198,31 +199,31 @@ export function NewsBoard() {
 }
 
 const styles = StyleSheet.create({
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033', marginBottom: 12, marginTop: 32 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12, marginTop: 32 },
   card: { backgroundColor: 'white', borderRadius: 16, padding: 16 },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 8 },
   input: {
-    flex: 1, backgroundColor: '#FFF8F0', borderRadius: 12, paddingHorizontal: 14,
+    flex: 1, backgroundColor: colors.background, borderRadius: 12, paddingHorizontal: 14,
     paddingTop: 12, paddingBottom: 12, fontSize: 16, maxHeight: 120, marginRight: 8,
   },
   sendButton: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: '#E07A5F',
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent,
     alignItems: 'center', justifyContent: 'center',
   },
   sendButtonDisabled: { opacity: 0.4 },
   sendButtonText: { color: 'white', fontSize: 20, fontWeight: '700' },
-  post: { paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F2E6DA' },
+  post: { paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.surfaceMuted },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  postAuthor: { fontSize: 14, fontWeight: '700', color: '#5C4033' },
-  postTime: { fontSize: 13, color: '#B5A397' },
-  postContent: { fontSize: 15, color: '#5C4033', lineHeight: 21 },
-  empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, paddingVertical: 12 },
-  moreButton: { paddingTop: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F2E6DA' },
-  moreText: { color: '#E07A5F', fontSize: 15, fontWeight: '600' },
+  postAuthor: { fontSize: 14, fontWeight: '700', color: colors.text },
+  postTime: { fontSize: 13, color: colors.textFaint },
+  postContent: { fontSize: 15, color: colors.text, lineHeight: 21 },
+  empty: { textAlign: 'center', color: colors.textMuted, fontSize: 15, paddingVertical: 12 },
+  moreButton: { paddingTop: 12, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.surfaceMuted },
+  moreText: { color: colors.accent, fontSize: 15, fontWeight: '600' },
   editBanner: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#F2E6DA', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
+    backgroundColor: colors.surfaceMuted, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
   },
-  editBannerText: { fontSize: 14, color: '#5C4033', fontWeight: '600' },
-  editCancel: { fontSize: 14, color: '#E07A5F', fontWeight: '600' },
+  editBannerText: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  editCancel: { fontSize: 14, color: colors.accent, fontWeight: '600' },
 });

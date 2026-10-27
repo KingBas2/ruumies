@@ -1,6 +1,7 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { Recurrence, RECURRENCE_LABELS, toDateKey } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -217,7 +218,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
               <Switch
                 value={allDay}
                 onValueChange={setAllDay}
-                trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+                trackColor={{ true: colors.accent, false: colors.border }}
               />
             </View>
 
@@ -242,7 +243,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
                   <Switch
                     value={end !== null}
                     onValueChange={toggleEnd}
-                    trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+                    trackColor={{ true: colors.accent, false: colors.border }}
                   />
                 </View>
 
@@ -283,7 +284,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
                   <Switch
                     value={until !== null}
                     onValueChange={toggleUntil}
-                    trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+                    trackColor={{ true: colors.accent, false: colors.border }}
                   />
                 </View>
                 {until && (
@@ -339,7 +340,7 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
                 value={isPrivate && !rotationActive}
                 onValueChange={setIsPrivate}
                 disabled={rotationActive}
-                trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+                trackColor={{ true: colors.accent, false: colors.border }}
               />
             </View>
           </View>
@@ -359,22 +360,22 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#F2E6DA',
+    borderBottomWidth: 1, borderBottomColor: colors.surfaceMuted,
   },
-  headerCancel: { fontSize: 16, color: '#8B6F5E' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#5C4033' },
-  headerSave: { fontSize: 16, color: '#E07A5F', fontWeight: '700' },
+  headerCancel: { fontSize: 16, color: colors.textMuted },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  headerSave: { fontSize: 16, color: colors.accent, fontWeight: '700' },
   disabled: { opacity: 0.4 },
   content: { padding: 20 },
-  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
+  errorBox: { backgroundColor: colors.dangerSoft, borderRadius: 12, padding: 12, marginBottom: 16 },
+  errorText: { color: colors.danger, fontSize: 15, fontWeight: '500', textAlign: 'center' },
   titleInput: {
     backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 18,
-    fontWeight: '600', color: '#5C4033', marginBottom: 16,
+    fontWeight: '600', color: colors.text, marginBottom: 16,
   },
   card: { backgroundColor: 'white', borderRadius: 14, paddingHorizontal: 16, marginBottom: 16 },
   cardDisabled: { opacity: 0.6 },
@@ -382,23 +383,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     minHeight: 52, paddingVertical: 6,
   },
-  divider: { height: 1, backgroundColor: '#F2E6DA' },
-  label: { fontSize: 16, color: '#5C4033' },
+  divider: { height: 1, backgroundColor: colors.surfaceMuted },
+  label: { fontSize: 16, color: colors.text },
   labelBlock: { flex: 1, marginRight: 12 },
-  sublabel: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
-  sectionLabel: { fontSize: 15, fontWeight: '700', color: '#5C4033', marginTop: 4, marginBottom: 10 },
-  sectionHint: { fontSize: 13, color: '#8B6F5E', marginTop: -6, marginBottom: 10 },
+  sublabel: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  sectionLabel: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 4, marginBottom: 10 },
+  sectionHint: { fontSize: 13, color: colors.textMuted, marginTop: -6, marginBottom: 10 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
   chip: {
-    backgroundColor: '#F2E6DA', borderRadius: 20, paddingVertical: 9, paddingHorizontal: 15,
+    backgroundColor: colors.surfaceMuted, borderRadius: 20, paddingVertical: 9, paddingHorizontal: 15,
     marginRight: 8, marginBottom: 8,
   },
-  chipActive: { backgroundColor: '#E07A5F' },
-  chipActiveGreen: { backgroundColor: '#81B29A' },
-  chipText: { color: '#5C4033', fontSize: 15, fontWeight: '500' },
+  chipActive: { backgroundColor: colors.accent },
+  chipActiveGreen: { backgroundColor: colors.success },
+  chipText: { color: colors.text, fontSize: 15, fontWeight: '500' },
   chipTextActive: { color: 'white' },
   notesInput: {
     backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16,
-    minHeight: 100, textAlignVertical: 'top', color: '#5C4033',
+    minHeight: 100, textAlignVertical: 'top', color: colors.text,
   },
 });

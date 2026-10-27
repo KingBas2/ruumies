@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -30,7 +31,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Allgemein',
       importance: Notifications.AndroidImportance.DEFAULT,
-      lightColor: '#E07A5F',
+      lightColor: colors.accent,
     });
   }
 

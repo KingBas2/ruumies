@@ -1,5 +1,6 @@
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -62,12 +63,12 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#FFF8F0' },
-  title: { fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 32, color: '#5C4033' },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.background },
+  title: { fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 32, color: colors.text },
   input: { backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 12, fontSize: 16 },
-  button: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  button: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   disabled: { opacity: 0.6 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   secondary: { padding: 16, alignItems: 'center' },
-  secondaryText: { color: '#5C4033', fontSize: 15 },
+  secondaryText: { color: colors.text, fontSize: 15 },
 });

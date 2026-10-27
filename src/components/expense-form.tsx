@@ -1,6 +1,7 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { formatEuro, parseAmount } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -229,39 +230,39 @@ export function ExpenseForm({ visible, members, userId, editExpense, onClose, on
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#F2E6DA',
+    borderBottomWidth: 1, borderBottomColor: colors.surfaceMuted,
   },
-  headerCancel: { fontSize: 16, color: '#8B6F5E' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#5C4033' },
-  headerSave: { fontSize: 16, color: '#E07A5F', fontWeight: '700' },
+  headerCancel: { fontSize: 16, color: colors.textMuted },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  headerSave: { fontSize: 16, color: colors.accent, fontWeight: '700' },
   disabled: { opacity: 0.4 },
   content: { padding: 20 },
-  errorBox: { backgroundColor: '#FBE3DC', borderRadius: 12, padding: 12, marginBottom: 8 },
-  errorText: { color: '#C0503A', fontSize: 15, fontWeight: '500', textAlign: 'center' },
+  errorBox: { backgroundColor: colors.dangerSoft, borderRadius: 12, padding: 12, marginBottom: 8 },
+  errorText: { color: colors.danger, fontSize: 15, fontWeight: '500', textAlign: 'center' },
 
   amountBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 16 },
-  amountInput: { fontSize: 48, fontWeight: '700', color: '#5C4033', minWidth: 120, textAlign: 'center' },
-  amountCurrency: { fontSize: 36, fontWeight: '600', color: '#8B6F5E', marginLeft: 6 },
+  amountInput: { fontSize: 48, fontWeight: '700', color: colors.text, minWidth: 120, textAlign: 'center' },
+  amountCurrency: { fontSize: 36, fontWeight: '600', color: colors.textMuted, marginLeft: 6 },
 
-  input: { backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16, color: '#5C4033', marginBottom: 16 },
+  input: { backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16, color: colors.text, marginBottom: 16 },
   card: { backgroundColor: 'white', borderRadius: 14, paddingHorizontal: 16, marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 52 },
-  label: { fontSize: 16, color: '#5C4033' },
+  label: { fontSize: 16, color: colors.text },
 
-  sectionLabel: { fontSize: 15, fontWeight: '700', color: '#5C4033', marginTop: 20, marginBottom: 10 },
+  sectionLabel: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 20, marginBottom: 10 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap' },
   chip: {
-    backgroundColor: '#F2E6DA', borderRadius: 20, paddingVertical: 9, paddingHorizontal: 15,
+    backgroundColor: colors.surfaceMuted, borderRadius: 20, paddingVertical: 9, paddingHorizontal: 15,
     marginRight: 8, marginBottom: 8,
   },
-  chipActive: { backgroundColor: '#E07A5F' },
-  chipActiveGreen: { backgroundColor: '#81B29A' },
-  chipText: { color: '#5C4033', fontSize: 15, fontWeight: '500' },
+  chipActive: { backgroundColor: colors.accent },
+  chipActiveGreen: { backgroundColor: colors.success },
+  chipText: { color: colors.text, fontSize: 15, fontWeight: '500' },
   chipTextActive: { color: 'white' },
 
-  preview: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, marginTop: 16 },
+  preview: { textAlign: 'center', color: colors.textMuted, fontSize: 15, marginTop: 16 },
 });

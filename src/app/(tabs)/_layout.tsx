@@ -1,3 +1,4 @@
+import { colors } from '@/lib/theme';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 
@@ -5,15 +6,20 @@ function TabIcon({ emoji, focused, size = 22 }: { emoji: string; focused: boolea
   return <Text style={{ fontSize: size, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
 }
 
+// Beim Öffnen der App immer mit Home starten
+export const unstable_settings = {
+  anchor: 'index',
+};
+
 export default function TabsLayout() {
   return (
     <Tabs
-      initialRouteName="index"
+      backBehavior="initialRoute"
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#E07A5F',
-        tabBarInactiveTintColor: '#8B6F5E',
-        tabBarStyle: { backgroundColor: '#FFF8F0', borderTopColor: '#F2E6DA' },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.surfaceMuted },
       }}
     >
       <Tabs.Screen

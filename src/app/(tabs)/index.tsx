@@ -2,6 +2,7 @@ import { NewsBoard } from '@/components/news-board';
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -131,13 +132,13 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   container: { padding: 24, paddingTop: 72 },
-  wgName: { fontSize: 32, fontWeight: 'bold', color: '#5C4033' },
-  summary: { fontSize: 16, color: '#8B6F5E', marginTop: 4, marginBottom: 24 },
+  wgName: { fontSize: 32, fontWeight: 'bold', color: colors.text },
+  summary: { fontSize: 16, color: colors.textMuted, marginTop: 4, marginBottom: 24 },
   toggle: { borderRadius: 20, padding: 24, alignItems: 'center', marginBottom: 12 },
-  toggleHome: { backgroundColor: '#81B29A' },
-  toggleAway: { backgroundColor: '#D9C7B8' },
+  toggleHome: { backgroundColor: colors.success },
+  toggleAway: { backgroundColor: colors.border },
   toggleEmoji: { fontSize: 48 },
   toggleText: { fontSize: 22, fontWeight: 'bold', color: 'white', marginTop: 8 },
   toggleHint: { fontSize: 13, color: 'white', opacity: 0.85, marginTop: 4 },
@@ -145,22 +146,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', borderRadius: 16, padding: 16,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  guestLabel: { fontSize: 16, color: '#5C4033', fontWeight: '500' },
+  guestLabel: { fontSize: 16, color: colors.text, fontWeight: '500' },
   stepper: { flexDirection: 'row', alignItems: 'center' },
   stepperButton: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#F2E6DA',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceMuted,
     alignItems: 'center', justifyContent: 'center',
   },
-  stepperButtonText: { fontSize: 20, color: '#5C4033', fontWeight: '600' },
-  stepperValue: { fontSize: 18, fontWeight: '700', color: '#5C4033', minWidth: 36, textAlign: 'center' },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033', marginBottom: 12, marginTop: 32 },
+  stepperButtonText: { fontSize: 20, color: colors.text, fontWeight: '600' },
+  stepperValue: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 36, textAlign: 'center' },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12, marginTop: 32 },
   card: { backgroundColor: 'white', borderRadius: 16, padding: 16 },
   memberRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
   dot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  dotHome: { backgroundColor: '#81B29A' },
-  dotAway: { backgroundColor: '#D9C7B8' },
+  dotHome: { backgroundColor: colors.success },
+  dotAway: { backgroundColor: colors.border },
   memberInfo: { flex: 1 },
-  memberName: { fontSize: 16, color: '#5C4033' },
-  memberGuests: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
-  memberStatus: { fontSize: 14, color: '#8B6F5E' },
+  memberName: { fontSize: 16, color: colors.text },
+  memberGuests: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  memberStatus: { fontSize: 14, color: colors.textMuted },
 });

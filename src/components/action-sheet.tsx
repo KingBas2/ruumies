@@ -1,3 +1,4 @@
+import { colors } from '@/lib/theme';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export type SheetAction = {
@@ -62,21 +63,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(60, 40, 30, 0.35)',
   },
   sheet: {
-    backgroundColor: '#FFF8F0', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 20, paddingBottom: 40,
   },
   handle: {
-    width: 40, height: 5, borderRadius: 3, backgroundColor: '#D9C7B8',
+    width: 40, height: 5, borderRadius: 3, backgroundColor: colors.border,
     alignSelf: 'center', marginBottom: 16,
   },
-  title: { fontSize: 20, fontWeight: '700', color: '#5C4033', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#8B6F5E', textAlign: 'center', marginTop: 4 },
+  title: { fontSize: 20, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginTop: 4 },
   actions: { backgroundColor: 'white', borderRadius: 16, marginTop: 20, overflow: 'hidden' },
   action: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 18 },
-  actionPressed: { backgroundColor: '#F2E6DA' },
+  actionPressed: { backgroundColor: colors.surfaceMuted },
   actionEmoji: { fontSize: 22, marginRight: 14 },
-  actionLabel: { fontSize: 16, color: '#5C4033', fontWeight: '500' },
-  destructive: { color: '#C0503A' },
+  actionLabel: { fontSize: 16, color: colors.text, fontWeight: '500' },
+  destructive: { color: colors.danger },
   cancel: { padding: 16, alignItems: 'center', marginTop: 8 },
-  cancelText: { fontSize: 16, color: '#8B6F5E', fontWeight: '600' },
+  cancelText: { fontSize: 16, color: colors.textMuted, fontWeight: '600' },
 });

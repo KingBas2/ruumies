@@ -10,6 +10,7 @@ import {
   toDateKey,
 } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -452,58 +453,58 @@ export default function Kalender() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, paddingTop: 72, paddingBottom: 120 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#5C4033', marginBottom: 16 },
+  title: { fontSize: 32, fontWeight: 'bold', color: colors.text, marginBottom: 16 },
 
   monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   navButton: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#F2E6DA',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceMuted,
     alignItems: 'center', justifyContent: 'center',
   },
-  navButtonText: { fontSize: 22, color: '#5C4033', fontWeight: '600', marginTop: -2 },
-  monthLabel: { fontSize: 18, fontWeight: '700', color: '#5C4033' },
+  navButtonText: { fontSize: 22, color: colors.text, fontWeight: '600', marginTop: -2 },
+  monthLabel: { fontSize: 18, fontWeight: '700', color: colors.text },
 
   calendarCard: { backgroundColor: 'white', borderRadius: 18, paddingVertical: 12, paddingHorizontal: 6 },
   weekdayRow: { flexDirection: 'row', marginBottom: 6 },
-  weekdayLabel: { width: `${100 / 7}%`, textAlign: 'center', fontSize: 12, color: '#B5A397', fontWeight: '600' },
+  weekdayLabel: { width: `${100 / 7}%`, textAlign: 'center', fontSize: 12, color: colors.textFaint, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayCell: { width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 4 },
   dayCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  dayCircleToday: { borderWidth: 1.5, borderColor: '#E07A5F' },
-  dayCircleSelected: { backgroundColor: '#E07A5F' },
-  dayNumber: { fontSize: 16, color: '#5C4033', fontWeight: '500' },
-  dayNumberOutside: { color: '#D9C7B8' },
-  dayNumberToday: { color: '#E07A5F', fontWeight: '700' },
+  dayCircleToday: { borderWidth: 1.5, borderColor: colors.accent },
+  dayCircleSelected: { backgroundColor: colors.accent },
+  dayNumber: { fontSize: 16, color: colors.text, fontWeight: '500' },
+  dayNumberOutside: { color: colors.border },
+  dayNumberToday: { color: colors.accent, fontWeight: '700' },
   dayNumberSelected: { color: 'white', fontWeight: '700' },
   dotRow: { flexDirection: 'row', height: 6, marginTop: 2 },
-  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#81B29A', marginHorizontal: 1 },
+  dot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.success, marginHorizontal: 1 },
   dotOutside: { opacity: 0.4 },
 
   todayButton: { alignSelf: 'center', marginTop: 12, paddingVertical: 6, paddingHorizontal: 14 },
-  todayButtonText: { color: '#E07A5F', fontSize: 14, fontWeight: '600' },
+  todayButtonText: { color: colors.accent, fontSize: 14, fontWeight: '600' },
 
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033', marginTop: 24, marginBottom: 12 },
-  empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 16, marginTop: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 24, marginBottom: 12 },
+  empty: { textAlign: 'center', color: colors.textMuted, fontSize: 16, marginTop: 16 },
   card: { backgroundColor: 'white', borderRadius: 16, paddingHorizontal: 16 },
   eventRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
-  eventRowBorder: { borderTopWidth: 1, borderTopColor: '#F2E6DA' },
-  eventBar: { width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: '#81B29A', marginRight: 12 },
-  eventBarPrivate: { backgroundColor: '#D9C7B8' },
+  eventRowBorder: { borderTopWidth: 1, borderTopColor: colors.surfaceMuted },
+  eventBar: { width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: colors.success, marginRight: 12 },
+  eventBarPrivate: { backgroundColor: colors.border },
   eventInfo: { flex: 1 },
-  eventTitle: { fontSize: 16, color: '#5C4033', fontWeight: '600' },
-  eventMeta: { fontSize: 14, color: '#8B6F5E', marginTop: 2 },
-  assignee: { fontSize: 13, color: '#81B29A', fontWeight: '600', marginTop: 3 },
-  assigneeMe: { color: '#E07A5F' },
+  eventTitle: { fontSize: 16, color: colors.text, fontWeight: '600' },
+  eventMeta: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
+  assignee: { fontSize: 13, color: colors.success, fontWeight: '600', marginTop: 3 },
+  assigneeMe: { color: colors.accent },
 
   upcomingDate: { width: 92, marginRight: 12 },
-  upcomingDay: { fontSize: 14, fontWeight: '700', color: '#E07A5F' },
-  upcomingTime: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
+  upcomingDay: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  upcomingTime: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
 
   fab: {
     position: 'absolute', right: 24, bottom: 24, width: 56, height: 56, borderRadius: 28,
-    backgroundColor: '#E07A5F', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#5C4033', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
+    backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.text, shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   fabText: { color: 'white', fontSize: 30, fontWeight: '500', marginTop: -2 },

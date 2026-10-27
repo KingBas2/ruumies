@@ -1,6 +1,7 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -419,31 +420,31 @@ const styles = StyleSheet.create({
   chipScroll: { marginBottom: 16, marginHorizontal: -24 },
   chipScrollContent: { paddingHorizontal: 24 },
   chip: {
-    backgroundColor: '#F2E6DA', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14,
+    backgroundColor: colors.surfaceMuted, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14,
     marginRight: 8, marginBottom: 8,
   },
-  chipActive: { backgroundColor: '#E07A5F' },
-  chipNew: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: '#D9C7B8', borderStyle: 'dashed' },
+  chipActive: { backgroundColor: colors.accent },
+  chipNew: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed' },
   chipPlus: { marginRight: 0, paddingHorizontal: 16 },
-  chipText: { color: '#5C4033', fontSize: 14, fontWeight: '500' },
+  chipText: { color: colors.text, fontSize: 14, fontWeight: '500' },
   chipTextActive: { color: 'white' },
-  chipPlusText: { color: '#8B6F5E', fontSize: 16, fontWeight: '700' },
+  chipPlusText: { color: colors.textMuted, fontSize: 16, fontWeight: '700' },
 
   formCard: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 },
-  formLabel: { fontSize: 15, fontWeight: '600', color: '#5C4033', marginBottom: 8 },
+  formLabel: { fontSize: 15, fontWeight: '600', color: colors.text, marginBottom: 8 },
   formButtons: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
   cancelButton: { paddingVertical: 12, paddingHorizontal: 16, marginRight: 8 },
-  cancelText: { color: '#8B6F5E', fontSize: 16 },
-  primaryButton: { backgroundColor: '#E07A5F', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 20 },
+  cancelText: { color: colors.textMuted, fontSize: 16 },
+  primaryButton: { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 20 },
   primaryButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  emojiInput: { width: 56, textAlign: 'center', marginRight: 8, backgroundColor: '#FFF8F0' },
+  emojiInput: { width: 56, textAlign: 'center', marginRight: 8, backgroundColor: colors.background },
 
   addRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   input: { backgroundColor: 'white', borderRadius: 12, padding: 14, fontSize: 16 },
   inputSpacing: { marginRight: 8 },
   inputQuantity: { width: 90 },
   addButton: {
-    width: 48, height: 48, borderRadius: 12, backgroundColor: '#E07A5F',
+    width: 48, height: 48, borderRadius: 12, backgroundColor: colors.accent,
     alignItems: 'center', justifyContent: 'center',
   },
   addButtonText: { color: 'white', fontSize: 26, fontWeight: '600' },
@@ -451,28 +452,28 @@ const styles = StyleSheet.create({
   card: { backgroundColor: 'white', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 4 },
   itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   checkbox: {
-    width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: '#D9C7B8',
+    width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: colors.border,
     marginRight: 12, alignItems: 'center', justifyContent: 'center',
   },
-  checkboxChecked: { backgroundColor: '#81B29A', borderColor: '#81B29A' },
+  checkboxChecked: { backgroundColor: colors.success, borderColor: colors.success },
   checkmark: { color: 'white', fontSize: 14, fontWeight: 'bold' },
-  itemName: { flex: 1, fontSize: 16, color: '#5C4033' },
-  itemNameChecked: { color: '#B5A397', textDecorationLine: 'line-through' },
-  itemQuantity: { fontSize: 14, color: '#8B6F5E' },
+  itemName: { flex: 1, fontSize: 16, color: colors.text },
+  itemNameChecked: { color: colors.textFaint, textDecorationLine: 'line-through' },
+  itemQuantity: { fontSize: 14, color: colors.textMuted },
 
   checkedHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginTop: 28, marginBottom: 12,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033' },
-  clearText: { color: '#E07A5F', fontSize: 15, fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 16, marginTop: 32 },
-  allDone: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, paddingVertical: 14 },
-  hint: { textAlign: 'center', color: '#B5A397', fontSize: 13, marginTop: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  clearText: { color: colors.accent, fontSize: 15, fontWeight: '600' },
+  empty: { textAlign: 'center', color: colors.textMuted, fontSize: 16, marginTop: 32 },
+  allDone: { textAlign: 'center', color: colors.textMuted, fontSize: 15, paddingVertical: 14 },
+  hint: { textAlign: 'center', color: colors.textFaint, fontSize: 13, marginTop: 24 },
   editBanner: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#F2E6DA', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
+    backgroundColor: colors.surfaceMuted, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 10,
   },
-  editBannerText: { fontSize: 14, color: '#5C4033', fontWeight: '600', flex: 1, marginRight: 8 },
-  editCancel: { fontSize: 14, color: '#E07A5F', fontWeight: '600' },
+  editBannerText: { fontSize: 14, color: colors.text, fontWeight: '600', flex: 1, marginRight: 8 },
+  editCancel: { fontSize: 14, color: colors.accent, fontWeight: '600' },
 });

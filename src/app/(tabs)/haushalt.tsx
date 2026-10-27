@@ -1,5 +1,6 @@
 import { Inventory } from '@/components/inventory';
 import { ShoppingLists } from '@/components/shopping-lists';
+import { colors } from '@/lib/theme';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -32,12 +33,12 @@ export default function Haushalt() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   header: { padding: 24, paddingTop: 72, paddingBottom: 8 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#5C4033', marginBottom: 16 },
-  tabs: { flexDirection: 'row', backgroundColor: '#F2E6DA', borderRadius: 12, padding: 4 },
+  title: { fontSize: 32, fontWeight: 'bold', color: colors.text, marginBottom: 16 },
+  tabs: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: 12, padding: 4 },
   tab: { flex: 1, padding: 10, borderRadius: 10, alignItems: 'center' },
   tabActive: { backgroundColor: 'white' },
-  tabText: { color: '#8B6F5E', fontWeight: '500' },
-  tabTextActive: { color: '#5C4033', fontWeight: '700' },
+  tabText: { color: colors.textMuted, fontWeight: '500' },
+  tabTextActive: { color: colors.text, fontWeight: '700' },
 });

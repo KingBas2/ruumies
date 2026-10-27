@@ -1,3 +1,4 @@
+import { colors } from '@/lib/theme';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 
@@ -53,6 +54,6 @@ export function DateTimeField({ value, onChange, mode, minimumDate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  field: { backgroundColor: '#F2E6DA', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
-  text: { fontSize: 15, color: '#5C4033', fontWeight: '500' },
+  field: { backgroundColor: colors.surfaceMuted, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
+  text: { fontSize: 15, color: colors.text, fontWeight: '500' },
 });

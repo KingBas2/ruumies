@@ -2,6 +2,7 @@ import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
@@ -123,7 +124,7 @@ export default function Profil() {
               value={prefs?.[option.key] ?? true}
               onValueChange={(value) => togglePref(option.key, value)}
               disabled={!prefs}
-              trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+              trackColor={{ true: colors.accent, false: colors.border }}
             />
           </View>
         ))}
@@ -172,26 +173,26 @@ export default function Profil() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   container: { padding: 24, paddingTop: 72 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#5C4033', marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033', marginBottom: 12 },
+  title: { fontSize: 32, fontWeight: 'bold', color: colors.text, marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 },
   card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 32 },
-  input: { backgroundColor: '#FFF8F0', borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 12 },
-  button: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 14, alignItems: 'center' },
+  input: { backgroundColor: colors.background, borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 12 },
+  button: { backgroundColor: colors.accent, borderRadius: 12, padding: 14, alignItems: 'center' },
   buttonDisabled: { opacity: 0.4 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
-  label: { fontSize: 15, color: '#8B6F5E' },
-  value: { fontSize: 15, color: '#5C4033', fontWeight: '500', flexShrink: 1, textAlign: 'right' },
+  label: { fontSize: 15, color: colors.textMuted },
+  value: { fontSize: 15, color: colors.text, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
   logout: { padding: 16, alignItems: 'center' },
-  logoutText: { color: '#E07A5F', fontSize: 16, fontWeight: '600' },
-  wgName: { fontSize: 20, fontWeight: '700', color: '#5C4033', textAlign: 'center' },
-  codeLabel: { fontSize: 14, color: '#8B6F5E', textAlign: 'center', marginTop: 16 },
-  code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: '#5C4033', textAlign: 'center', marginVertical: 8 },
+  logoutText: { color: colors.accent, fontSize: 16, fontWeight: '600' },
+  wgName: { fontSize: 20, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  codeLabel: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginTop: 16 },
+  code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: colors.text, textAlign: 'center', marginVertical: 8 },
   prefRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-  prefRowBorder: { borderTopWidth: 1, borderTopColor: '#F2E6DA' },
+  prefRowBorder: { borderTopWidth: 1, borderTopColor: colors.surfaceMuted },
   prefText: { flex: 1, marginRight: 12 },
-  prefLabel: { fontSize: 16, color: '#5C4033', fontWeight: '500' },
-  prefHint: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
+  prefLabel: { fontSize: 16, color: colors.text, fontWeight: '500' },
+  prefHint: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
 });

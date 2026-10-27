@@ -3,6 +3,7 @@ import { ExpenseForm, Member } from '@/components/expense-form';
 import { useDialog } from '@/lib/dialog';
 import { formatEuro } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -317,41 +318,41 @@ export default function Finanzen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFF8F0' },
+  screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, paddingTop: 72, paddingBottom: 120 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#5C4033', marginBottom: 16 },
+  title: { fontSize: 32, fontWeight: 'bold', color: colors.text, marginBottom: 16 },
   bold: { fontWeight: '700' },
 
-  balanceCard: { borderRadius: 20, padding: 24, alignItems: 'center', backgroundColor: '#D9C7B8' },
-  balancePositive: { backgroundColor: '#81B29A' },
-  balanceNegative: { backgroundColor: '#E07A5F' },
+  balanceCard: { borderRadius: 20, padding: 24, alignItems: 'center', backgroundColor: colors.border },
+  balancePositive: { backgroundColor: colors.success },
+  balanceNegative: { backgroundColor: colors.accent },
   balanceEmoji: { fontSize: 40 },
   balanceLabel: { fontSize: 16, color: 'white', fontWeight: '600', marginTop: 4 },
   balanceAmount: { fontSize: 40, color: 'white', fontWeight: '800', marginTop: 4 },
 
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#5C4033', marginTop: 28, marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 28, marginBottom: 12 },
   card: { backgroundColor: 'white', borderRadius: 16, paddingHorizontal: 16 },
-  rowBorder: { borderTopWidth: 1, borderTopColor: '#F2E6DA' },
-  empty: { textAlign: 'center', color: '#8B6F5E', fontSize: 15, marginTop: 8 },
+  rowBorder: { borderTopWidth: 1, borderTopColor: colors.surfaceMuted },
+  empty: { textAlign: 'center', color: colors.textMuted, fontSize: 15, marginTop: 8 },
 
   transferRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   transferInfo: { flex: 1 },
-  transferNames: { fontSize: 16, color: '#5C4033' },
-  transferAmount: { fontSize: 14, color: '#8B6F5E', marginTop: 2 },
-  settleButton: { backgroundColor: '#F2E6DA', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 },
-  settleButtonText: { color: '#5C4033', fontSize: 14, fontWeight: '600' },
+  transferNames: { fontSize: 16, color: colors.text },
+  transferAmount: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
+  settleButton: { backgroundColor: colors.surfaceMuted, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 },
+  settleButtonText: { color: colors.text, fontSize: 14, fontWeight: '600' },
 
   historyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   historyEmoji: { fontSize: 22, marginRight: 12 },
   historyInfo: { flex: 1 },
-  historyTitle: { fontSize: 16, color: '#5C4033', fontWeight: '600' },
-  historyMeta: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
-  historyAmount: { fontSize: 16, color: '#5C4033', fontWeight: '600', marginLeft: 8 },
+  historyTitle: { fontSize: 16, color: colors.text, fontWeight: '600' },
+  historyMeta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  historyAmount: { fontSize: 16, color: colors.text, fontWeight: '600', marginLeft: 8 },
 
   fab: {
     position: 'absolute', right: 24, bottom: 24, width: 56, height: 56, borderRadius: 28,
-    backgroundColor: '#E07A5F', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#5C4033', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
+    backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.text, shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   fabText: { color: 'white', fontSize: 30, fontWeight: '500', marginTop: -2 },

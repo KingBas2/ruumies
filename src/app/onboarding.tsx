@@ -2,6 +2,7 @@ import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { colors } from '@/lib/theme';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -81,17 +82,17 @@ export default function Onboarding() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#FFF8F0' },
-  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#5C4033' },
-  subtitle: { fontSize: 16, textAlign: 'center', color: '#8B6F5E', marginTop: 8, marginBottom: 32 },
-  tabs: { flexDirection: 'row', backgroundColor: '#F2E6DA', borderRadius: 12, padding: 4, marginBottom: 16 },
+  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.background },
+  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: colors.text },
+  subtitle: { fontSize: 16, textAlign: 'center', color: colors.textMuted, marginTop: 8, marginBottom: 32 },
+  tabs: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: 12, padding: 4, marginBottom: 16 },
   tab: { flex: 1, padding: 12, borderRadius: 10, alignItems: 'center' },
   tabActive: { backgroundColor: 'white' },
-  tabText: { color: '#8B6F5E', fontWeight: '500' },
-  tabTextActive: { color: '#5C4033', fontWeight: '700' },
+  tabText: { color: colors.textMuted, fontWeight: '500' },
+  tabTextActive: { color: colors.text, fontWeight: '700' },
   input: { backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 12, fontSize: 16 },
-  button: { backgroundColor: '#E07A5F', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
+  button: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
   buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
   logout: { padding: 16, alignItems: 'center', marginTop: 8 },
-  logoutText: { color: '#8B6F5E', fontSize: 15 },
+  logoutText: { color: colors.textMuted, fontSize: 15 },
 });
