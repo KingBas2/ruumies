@@ -3,7 +3,16 @@ import { useHousehold } from '@/lib/household';
 import { unregisterPushNotifications } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+
+type PrefKey = 'notify_news' | 'notify_rotation' | 'notify_expenses' | 'notify_events';
+
+const PREF_OPTIONS: { key: PrefKey; label: string; hint: string }[] = [
+  { key: 'notify_news', label: '📌 Pinnwand', hint: 'Neue Beiträge deiner Mitbewohner' },
+  { key: 'notify_rotation', label: '🧹 Putzplan', hint: 'Am Vorabend, wenn du dran bist' },
+  { key: 'notify_expenses', label: '💸 Ausgaben', hint: 'Wenn jemand etwas für dich mit eingetragen hat' },
+  { key: 'notify_events', label: '📅 Termine', hint: 'Neue gemeinsame Termine' },
+];
 
 export default function Profil() {
   const { household } = useHousehold();
@@ -12,6 +21,7 @@ export default function Profil() {
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [prefs, setPrefs] = useState<Record<PrefKey, boolean> | null>(null);
   const dialog = useDialog();
 
   useEffect(() => {
@@ -25,7 +35,7 @@ export default function Profil() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name')
+        .select('display_name, notify_news, notify_rotation, notify_expenses, notify_events')
         .eq('id', user.id)
         .single();
 
@@ -35,6 +45,12 @@ export default function Profil() {
       }
       setName(data.display_name ?? '');
       setSavedName(data.display_name ?? '');
+      setPrefs({
+        notify_news: data.notify_news,
+        notify_rotation: data.notify_rotation,
+        notify_expenses: data.notify_expenses,
+        notify_events: data.notify_events,
+      });
     }
     load();
   }, []);
@@ -67,6 +83,16 @@ export default function Profil() {
     });
   }
 
+  async function togglePref(key: PrefKey, value: boolean) {
+    if (!userId || !prefs) return;
+    setPrefs({ ...prefs, [key]: value }); // sofort umschalten
+    const { error } = await supabase.from('profiles').update({ [key]: value }).eq('id', userId);
+    if (error) {
+      setPrefs({ ...prefs, [key]: !value }); // zurückdrehen
+      dialog.alert('Das hat nicht geklappt', error.message);
+    }
+  }
+
   function confirmLogout() {
     dialog.confirm({
       title: 'Abmelden?',
@@ -84,6 +110,24 @@ export default function Profil() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Profil</Text>
+
+      <Text style={styles.sectionTitle}>Benachrichtigungen</Text>
+      <View style={styles.card}>
+        {PREF_OPTIONS.map((option, i) => (
+          <View key={option.key} style={[styles.prefRow, i > 0 && styles.prefRowBorder]}>
+            <View style={styles.prefText}>
+              <Text style={styles.prefLabel}>{option.label}</Text>
+              <Text style={styles.prefHint}>{option.hint}</Text>
+            </View>
+            <Switch
+              value={prefs?.[option.key] ?? true}
+              onValueChange={(value) => togglePref(option.key, value)}
+              disabled={!prefs}
+              trackColor={{ true: '#E07A5F', false: '#D9C7B8' }}
+            />
+          </View>
+        ))}
+      </View>
 
       <Text style={styles.sectionTitle}>Dein Name</Text>
       <View style={styles.card}>
@@ -145,4 +189,9 @@ const styles = StyleSheet.create({
   wgName: { fontSize: 20, fontWeight: '700', color: '#5C4033', textAlign: 'center' },
   codeLabel: { fontSize: 14, color: '#8B6F5E', textAlign: 'center', marginTop: 16 },
   code: { fontSize: 32, fontWeight: 'bold', letterSpacing: 6, color: '#5C4033', textAlign: 'center', marginVertical: 8 },
+  prefRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  prefRowBorder: { borderTopWidth: 1, borderTopColor: '#F2E6DA' },
+  prefText: { flex: 1, marginRight: 12 },
+  prefLabel: { fontSize: 16, color: '#5C4033', fontWeight: '500' },
+  prefHint: { fontSize: 13, color: '#8B6F5E', marginTop: 2 },
 });
