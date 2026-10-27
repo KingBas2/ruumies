@@ -1,4 +1,5 @@
 import { ActionSheet } from '@/components/action-sheet';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -68,6 +69,12 @@ export function Inventory() {
     if (error) console.error(error);
     else setLocations(data ?? []);
   }, []);
+
+  const reloadAll = useCallback(async () => {
+    await Promise.all([loadItems(), loadLocations()]);
+  }, [loadItems, loadLocations]);
+
+  const refreshControl = usePullToRefresh(reloadAll);
 
   useEffect(() => {
     loadItems();
@@ -244,7 +251,7 @@ export function Inventory() {
   const visibleCount = items.filter((i) => filter === 'all' || i.location_id === filter).length;
 
   return (
-    <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" refreshControl={refreshControl}>
       {/* Filter-Chips (gedrückt halten = Ort verwalten) */}
       <ScrollView
         horizontal

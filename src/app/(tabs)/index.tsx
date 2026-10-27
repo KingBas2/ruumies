@@ -1,4 +1,5 @@
 import { NewsBoard } from '@/components/news-board';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { useHousehold } from '@/lib/household';
 import { useScreenTopPadding } from '@/lib/layout';
@@ -19,6 +20,7 @@ function guestLabel(n: number) {
 }
 
 export default function Home() {
+  const [refreshKey, setRefreshKey] = useState(0);
   const topPadding = useScreenTopPadding();
   const { household } = useHousehold();
   const [userId, setUserId] = useState<string | null>(null);
@@ -33,6 +35,13 @@ export default function Home() {
     if (error) console.error(error);
     else setMembers(data ?? []);
   }, []);
+
+  const reloadAll = useCallback(async () => {
+    setRefreshKey((k) => k + 1); // sagt der Pinnwand: neu laden
+    await loadMembers();
+  }, [loadMembers]);
+
+  const refreshControl = usePullToRefresh(reloadAll);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
@@ -82,7 +91,7 @@ export default function Home() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingTop: topPadding }]}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.container, { paddingTop: topPadding }]} refreshControl={refreshControl}>
       <Text style={styles.wgName}>{household?.name}</Text>
       <Text style={styles.summary}>
         {homeCount} von {members.length} zuhause
@@ -110,7 +119,7 @@ export default function Home() {
         </View>
       )}
 
-      <NewsBoard />
+    <NewsBoard refreshKey={refreshKey} />
       <Text style={styles.sectionTitle}>Mitbewohner</Text>
       <View style={styles.card}>
         {members.map((m) => (

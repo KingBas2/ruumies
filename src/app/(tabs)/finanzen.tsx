@@ -1,5 +1,6 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { ExpenseForm, Member } from '@/components/expense-form';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { useScreenTopPadding } from '@/lib/layout';
 import { formatEuro } from '@/lib/money';
@@ -102,6 +103,8 @@ export default function Finanzen() {
     else setSettlements(settlementRes.data ?? []);
   }, []);
 
+  const refreshControl = usePullToRefresh(loadAll);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
     supabase
@@ -192,7 +195,7 @@ export default function Finanzen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]} refreshControl={refreshControl}>
         <Text style={styles.title}>Finanzen</Text>
 
         {/* Mein Saldo */}

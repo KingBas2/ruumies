@@ -1,6 +1,7 @@
 import { ActionSheet } from '@/components/action-sheet';
 import { formatDate, formatTime } from '@/components/date-time-field';
 import { EventForm } from '@/components/event-form';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { useScreenTopPadding } from '@/lib/layout';
 import {
@@ -155,10 +156,11 @@ export default function Kalender() {
     setUpcoming(next.slice(0, 3));
   }, []);
 
-  const reload = useCallback(() => {
-    loadMonth();
-    loadUpcoming();
+  const reload = useCallback(async () => {
+    await Promise.all([loadMonth(), loadUpcoming()]);
   }, [loadMonth, loadUpcoming]);
+
+  const refreshControl = usePullToRefresh(reload);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? null));
@@ -343,7 +345,7 @@ export default function Kalender() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topPadding }]} refreshControl={refreshControl}>
         <Text style={styles.title}>Kalender</Text>
 
         {/* Monats-Navigation */}

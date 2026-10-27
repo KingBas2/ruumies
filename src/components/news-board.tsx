@@ -33,7 +33,7 @@ function timeAgo(iso: string) {
   return new Date(iso).toLocaleDateString('de-AT', { day: 'numeric', month: 'short' });
 }
 
-export function NewsBoard() {
+export function NewsBoard({ refreshKey = 0 }: { refreshKey?: number }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -74,6 +74,11 @@ export function NewsBoard() {
       supabase.removeChannel(channel);
     };
   }, [loadPosts]);
+
+  // Neu laden, wenn die Startseite heruntergezogen wird
+  useEffect(() => {
+    if (refreshKey > 0) loadPosts();
+  }, [refreshKey, loadPosts]);
 
   function authorName(id: string | null) {
     if (id === userId) return 'Du';

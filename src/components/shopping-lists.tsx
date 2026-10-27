@@ -1,4 +1,5 @@
 import { ActionSheet } from '@/components/action-sheet';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
@@ -59,6 +60,12 @@ export function ShoppingLists() {
     if (error) console.error(error);
     else setItems(data ?? []);
   }, []);
+
+  const reloadAll = useCallback(async () => {
+    await Promise.all([loadLists(), loadItems()]);
+  }, [loadLists, loadItems]);
+
+  const refreshControl = usePullToRefresh(reloadAll);
 
   useEffect(() => {
     loadLists();
@@ -251,7 +258,7 @@ export function ShoppingLists() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" refreshControl={refreshControl}>
       {/* Listen-Chips (gedrückt halten = Liste verwalten) */}
       <ScrollView
         horizontal
