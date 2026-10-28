@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Balance, formatEuro, myTransfers, simplifyDebts } from '@/lib/money';
 
 type PrefKey = 'notify_news' | 'notify_rotation' | 'notify_expenses' | 'notify_events';
 
@@ -18,7 +19,7 @@ const PREF_OPTIONS: { key: PrefKey; label: string; hint: string }[] = [
 
 export default function Profil() {
   const topPadding = useScreenTopPadding();
-  const { household } = useHousehold();
+  const { household, refresh } = useHousehold();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | undefined>();
   const [name, setName] = useState('');
@@ -96,6 +97,50 @@ export default function Profil() {
     }
   }
 
+  async function confirmLeave() {
+    // Erst prüfen, ob noch Geld offen ist
+    const [balanceRes, memberRes] = await Promise.all([
+      supabase.rpc('household_balances'),
+      supabase.from('profiles').select('id, display_name'),
+    ]);
+
+    const balances = (balanceRes.data ?? []).map((b: Balance) => ({
+      ...b,
+      balance_cents: Number(b.balance_cents),
+    }));
+    const open = myTransfers(simplifyDebts(balances), userId);
+
+    if (open.length > 0) {
+      const lines = open.map((t) => {
+        const other = memberRes.data?.find((p) => p.id === t.otherId)?.display_name ?? 'jemand';
+        return t.amount > 0
+          ? `${other} schuldet dir ${formatEuro(t.amount)}`
+          : `Du schuldest ${other} ${formatEuro(-t.amount)}`;
+      });
+      dialog.alert(
+        'Zuerst Finanzen ausgleichen',
+        `Bevor du die WG verlässt, muss noch Geld ausgeglichen werden:\n\n${lines.join('\n')}\n\nDu findest alles unter 💸 Finanzen.`
+      );
+      return;
+    }
+
+    dialog.confirm({
+      title: `„${household?.name}“ verlassen?`,
+      message:
+        'Du wirst aus allen Putzplänen entfernt, und deine Sachen im Bestand werden gemeinsam. Mit einem Einladungscode kannst du später wieder beitreten.',
+      confirmLabel: 'Verlassen',
+      destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase.rpc('leave_household');
+        if (error) {
+          dialog.alert('Verlassen nicht möglich', error.message);
+          return;
+        }
+        await refresh(); // keine WG mehr → Layout zeigt das Onboarding
+      },
+    });
+  }
+
   function confirmLogout() {
     dialog.confirm({
       title: 'Abmelden?',
@@ -167,6 +212,11 @@ export default function Profil() {
         </View>
       </View>
 
+      <Pressable
+        style={({ pressed }) => [styles.leaveCard, pressed && styles.pressed]} onPress={confirmLeave}>
+        <Text style={styles.leaveText}>WG verlassen</Text>
+      </Pressable>
+
       <Pressable style={styles.logout} onPress={confirmLogout}>
         <Text style={styles.logoutText}>Abmelden</Text>
       </Pressable>
@@ -197,4 +247,10 @@ const styles = StyleSheet.create({
   prefText: { flex: 1, marginRight: 12 },
   prefLabel: { fontSize: 16, color: colors.text, fontWeight: '500' },
   prefHint: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  leaveCard: {
+    backgroundColor: colors.surface, borderRadius: 16,
+    paddingVertical: 16, alignItems: 'center', marginBottom: 8,
+  },
+  pressed: { opacity: 0.7 },
+  leaveText: { color: colors.danger, fontSize: 15, fontWeight: '600' },
 });

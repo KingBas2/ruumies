@@ -3,13 +3,11 @@ import { ExpenseForm, Member } from '@/components/expense-form';
 import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { useDialog } from '@/lib/dialog';
 import { useScreenTopPadding } from '@/lib/layout';
-import { formatEuro } from '@/lib/money';
+import { Balance, formatEuro, myTransfers, simplifyDebts, Transfer } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-type Balance = { user_id: string; balance_cents: number };
 
 type Expense = {
   id: string;
@@ -30,37 +28,10 @@ type Settlement = {
   created_at: string;
 };
 
-type Transfer = { from: string; to: string; amount: number };
-
 // Verlauf: Ausgaben und Rückzahlungen gemischt
 type HistoryEntry =
   | { kind: 'expense'; date: string; data: Expense }
   | { kind: 'settlement'; date: string; data: Settlement };
-
-// Aus den Salden möglichst wenige Überweisungen berechnen
-function simplifyDebts(balances: Balance[]): Transfer[] {
-  const creditors = balances
-    .filter((b) => b.balance_cents > 0)
-    .map((b) => ({ id: b.user_id, amount: b.balance_cents }))
-    .sort((a, b) => b.amount - a.amount);
-  const debtors = balances
-    .filter((b) => b.balance_cents < 0)
-    .map((b) => ({ id: b.user_id, amount: -b.balance_cents }))
-    .sort((a, b) => b.amount - a.amount);
-
-  const transfers: Transfer[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const amount = Math.min(debtors[i].amount, creditors[j].amount);
-    transfers.push({ from: debtors[i].id, to: creditors[j].id, amount });
-    debtors[i].amount -= amount;
-    creditors[j].amount -= amount;
-    if (debtors[i].amount === 0) i++;
-    if (creditors[j].amount === 0) j++;
-  }
-  return transfers;
-}
 
 function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-AT', { day: 'numeric', month: 'short' });
@@ -185,6 +156,7 @@ export default function Finanzen() {
 
   const myBalance = balances.find((b) => b.user_id === userId)?.balance_cents ?? 0;
   const transfers = simplifyDebts(balances);
+  const mine = myTransfers(transfers, userId);
 
   const history: HistoryEntry[] = [
     ...expenses.map((e) => ({ kind: 'expense' as const, date: e.created_at, data: e })),
@@ -215,6 +187,15 @@ export default function Finanzen() {
             <>
               <Text style={styles.balanceLabel}>{myBalance > 0 ? 'Du bekommst' : 'Du schuldest'}</Text>
               <Text style={styles.balanceAmount}>{formatEuro(Math.abs(myBalance))}</Text>
+              {mine.length > 0 && (
+                <View style={styles.balanceDetails}>
+                  {mine.map((m) => (
+                    <Text key={m.otherId} style={styles.balanceSub}>
+                      {formatEuro(Math.abs(m.amount))} {m.amount > 0 ? 'von' : 'an'} {name(m.otherId)}
+                    </Text>
+                  ))}
+                </View>
+              )}
             </>
           )}
         </View>
@@ -361,4 +342,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { color: 'white', fontSize: 30, fontWeight: '500', marginTop: -2 },
+  balanceDetails: { marginTop: 10, alignItems: 'center' },
+  balanceSub: { fontSize: 15, color: 'white', opacity: 0.9, fontWeight: '500', marginTop: 2 },
 });
