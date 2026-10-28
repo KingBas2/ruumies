@@ -2,8 +2,8 @@ import { DateTimeField } from '@/components/date-time-field';
 import { Recurrence, RECURRENCE_LABELS, toDateKey } from '@/lib/recurrence';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
-import { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ComponentRef, useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Member = {
@@ -51,6 +51,12 @@ function withTime(base: Date, picked: Date) {
 
 export function EventForm({ visible, initialDate, members, userId, editEvent, onClose, onSaved }: Props) {
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+
+  // Beim Notizen-Feld ganz unten: nach unten scrollen, sobald die Tastatur da ist
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
+  }
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [allDay, setAllDay] = useState(false);
@@ -195,7 +201,8 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           {error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
@@ -352,8 +359,10 @@ export function EventForm({ visible, initialDate, members, userId, editEvent, on
             value={notes}
             onChangeText={setNotes}
             multiline
+            onFocus={scrollToBottom}
           />
         </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -370,7 +379,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
   headerSave: { fontSize: 16, color: colors.accent, fontWeight: '700' },
   disabled: { opacity: 0.4 },
-  content: { padding: 20 },
+  content: { padding: 20, paddingBottom: 60 },
   errorBox: { backgroundColor: colors.dangerSoft, borderRadius: 12, padding: 12, marginBottom: 16 },
   errorText: { color: colors.danger, fontSize: 15, fontWeight: '500', textAlign: 'center' },
   titleInput: {
@@ -402,4 +411,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', borderRadius: 14, padding: 16, fontSize: 16,
     minHeight: 100, textAlignVertical: 'top', color: colors.text,
   },
+  flex: { flex: 1 },
 });

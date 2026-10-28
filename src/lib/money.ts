@@ -11,6 +11,14 @@ export function parseAmount(text: string): number | null {
   return cents > 0 ? cents : null;
 }
 
+// Wie parseAmount, aber 0 und leeres Feld sind erlaubt (für einzelne Anteile)
+export function parseShare(text: string): number | null {
+  if (text.trim() === '') return 0;
+  const normalized = text.replace(/\s/g, '').replace('€', '').replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+  return Math.round(parseFloat(normalized) * 100);
+}
+
 export type Balance = { user_id: string; balance_cents: number };
 export type Transfer = { from: string; to: string; amount: number };
 

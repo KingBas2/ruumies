@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ExpenseDetail, Split } from '@/components/expense-detail';
 
 type Expense = {
   id: string;
@@ -47,6 +48,8 @@ export default function Finanzen() {
   const [showForm, setShowForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [splits, setSplits] = useState<Split[]>([]);
+  const [detailExpense, setDetailExpense] = useState<Expense | null>(null);
   const dialog = useDialog();
 
   const loadAll = useCallback(async () => {
@@ -67,8 +70,25 @@ export default function Finanzen() {
     if (balanceRes.error) console.error(balanceRes.error);
     else setBalances((balanceRes.data ?? []).map((b: Balance) => ({ ...b, balance_cents: Number(b.balance_cents) })));
 
-    if (expenseRes.error) console.error(expenseRes.error);
-    else setExpenses(expenseRes.data ?? []);
+    if (expenseRes.error) {
+      console.error(expenseRes.error);
+    } else {
+      const loaded = expenseRes.data ?? [];
+      setExpenses(loaded);
+
+      // Anteile der geladenen Ausgaben holen
+      const ids = loaded.map((e) => e.id);
+      if (ids.length > 0) {
+        const { data, error } = await supabase
+          .from('expense_splits')
+          .select('expense_id, user_id, amount_cents, paid_at')
+          .in('expense_id', ids);
+        if (error) console.error(error);
+        else setSplits(data ?? []);
+      } else {
+        setSplits([]);
+      }
+    }
 
     if (settlementRes.error) console.error(settlementRes.error);
     else setSettlements(settlementRes.data ?? []);
@@ -93,6 +113,7 @@ export default function Finanzen() {
       .channel('finance-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'settlements' }, () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expense_splits' }, () => loadAll())
       .subscribe();
 
     return () => {
@@ -118,6 +139,36 @@ export default function Finanzen() {
   function openEdit(e: Expense) {
     setEditingExpense(e);
     setShowForm(true);
+  }
+
+  function splitsOf(expenseId: string) {
+    return splits.filter((s) => s.expense_id === expenseId);
+  }
+
+  // Alle Anteile außer dem des Zahlers zurückgezahlt?
+  function settledInfo(e: Expense) {
+    const others = splitsOf(e.id).filter((s) => s.user_id !== e.paid_by);
+    const paid = others.filter((s) => s.paid_at !== null).length;
+    return { total: others.length, paid, done: others.length > 0 && paid === others.length };
+  }
+
+  async function toggleSplit(s: Split) {
+    const nowPaid = s.paid_at === null;
+    // Sofort anzeigen, dann speichern
+    setSplits((prev) =>
+      prev.map((x) =>
+        x.expense_id === s.expense_id && x.user_id === s.user_id
+          ? { ...x, paid_at: nowPaid ? new Date().toISOString() : null }
+          : x
+      )
+    );
+    const { error } = await supabase.rpc('set_split_paid', {
+      p_expense_id: s.expense_id,
+      p_user_id: s.user_id,
+      p_paid: nowPaid,
+    });
+    if (error) dialog.alert('Das hat nicht geklappt', error.message);
+    loadAll();
   }
 
   // ---------- Aktionen ----------
@@ -235,18 +286,29 @@ export default function Finanzen() {
               <Pressable
                 key={`${entry.kind}-${entry.data.id}`}
                 style={[styles.historyRow, i > 0 && styles.rowBorder]}
-                onPress={() => canDelete(entry) && setSelectedEntry(entry)}
+                onPress={() =>
+                  entry.kind === 'expense'
+                    ? setDetailExpense(entry.data)
+                    : canDelete(entry) && setSelectedEntry(entry)
+                }
               >
                 <Text style={styles.historyEmoji}>{entry.kind === 'expense' ? '🧾' : '💸'}</Text>
                 <View style={styles.historyInfo}>
                   {entry.kind === 'expense' ? (
-                    <>
-                      <Text style={styles.historyTitle}>{entry.data.title}</Text>
-                      <Text style={styles.historyMeta}>
-                        {name(entry.data.paid_by)} {entry.data.paid_by === userId ? 'hast' : 'hat'} bezahlt ·{' '}
-                        {shortDate(entry.data.spent_on)}
-                      </Text>
-                    </>
+                    (() => {
+                      const info = settledInfo(entry.data);
+                      return (
+                        <>
+                          <Text style={[styles.historyTitle, info.done && styles.struck]}>{entry.data.title}</Text>
+                          <Text style={styles.historyMeta}>
+                            {info.done
+                              ? '✓ komplett zurückgezahlt'
+                              : `${name(entry.data.paid_by)} ${entry.data.paid_by === userId ? 'hast' : 'hat'} bezahlt · ${shortDate(entry.data.spent_on)}`}
+                            {!info.done && info.paid > 0 ? ` · ${info.paid}/${info.total} zurück` : ''}
+                          </Text>
+                        </>
+                      );
+                    })()
                   ) : (
                     <>
                       <Text style={styles.historyTitle}>Rückzahlung</Text>
@@ -256,7 +318,14 @@ export default function Finanzen() {
                     </>
                   )}
                 </View>
-                <Text style={styles.historyAmount}>{formatEuro(entry.data.amount_cents)}</Text>
+                <Text
+                  style={[
+                    styles.historyAmount,
+                    entry.kind === 'expense' && settledInfo(entry.data).done && styles.struck,
+                  ]}
+                >
+                  {formatEuro(entry.data.amount_cents)}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -279,26 +348,31 @@ export default function Finanzen() {
 
       <ActionSheet
         visible={selectedEntry !== null}
-        title={
-          selectedEntry?.kind === 'expense'
-            ? selectedEntry.data.title
-            : selectedEntry
-              ? 'Rückzahlung'
-              : undefined
-        }
+        title="Rückzahlung"
         subtitle={selectedEntry ? formatEuro(selectedEntry.data.amount_cents) : undefined}
         actions={
           selectedEntry
-            ? [
-                ...(selectedEntry.kind === 'expense'
-                  ? [{ label: 'Bearbeiten', emoji: '✏️', onPress: () => openEdit(selectedEntry.data as Expense) }]
-                  : []),
-                { label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteEntry(selectedEntry) },
-              ]
+            ? [{ label: 'Löschen', emoji: '🗑️', destructive: true, onPress: () => deleteEntry(selectedEntry) }]
             : []
         }
         onClose={() => setSelectedEntry(null)}
       />
+
+      {detailExpense && (
+        <ExpenseDetail
+          visible={detailExpense !== null}
+          title={detailExpense.title}
+          amountCents={detailExpense.amount_cents}
+          paidBy={detailExpense.paid_by}
+          splits={splitsOf(detailExpense.id)}
+          userId={userId}
+          nameOf={(id) => name(id)}
+          onToggle={toggleSplit}
+          onEdit={() => openEdit(detailExpense)}
+          onDelete={() => deleteEntry({ kind: 'expense', date: detailExpense.created_at, data: detailExpense })}
+          onClose={() => setDetailExpense(null)}
+        />
+      )}
     </View>
   );
 }
@@ -344,4 +418,5 @@ const styles = StyleSheet.create({
   fabText: { color: 'white', fontSize: 30, fontWeight: '500', marginTop: -2 },
   balanceDetails: { marginTop: 10, alignItems: 'center' },
   balanceSub: { fontSize: 15, color: 'white', opacity: 0.9, fontWeight: '500', marginTop: 2 },
+  struck: { textDecorationLine: 'line-through', color: colors.textFaint },
 });
